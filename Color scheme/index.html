@@ -1,0 +1,2315 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palette Generator Pro</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #007bff;
+            --glass-bg-light: rgba(255, 255, 255, 0.7);
+            --glass-bg-dark: rgba(30, 30, 30, 0.7);
+            --border-light: rgba(255, 255, 255, 0.2);
+            --border-dark: rgba(255, 255, 255, 0.1);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --step-bg: #007bff;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            padding: 40px 20px 20px 20px;
+            min-height: 100vh;
+            /* ← 追加 */
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            line-height: 1.6;
+        }
+
+        html.light body {
+            background: #ffffff;
+            color: #222;
+        }
+
+        html.dark body {
+            background: linear-gradient(180deg, #0c0c0c 0%, #151515 100%);
+            color: #eaeaea;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            body:not(.forced-pc) .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Forced PC Layout */
+        body.forced-pc .container {
+            grid-template-columns: 1fr 400px;
+            width: 1200px;
+            margin: 0 auto;
+            overflow-x: auto;
+        }
+
+        body.forced-pc {
+            overflow-x: auto;
+            padding: 20px;
+            min-width: 1250px;
+        }
+
+        /* Forced Mobile Layout */
+        body.forced-mobile .container {
+            grid-template-columns: 1fr;
+        }
+
+        body.forced-mobile .colorBox {
+            height: 80px;
+        }
+
+        .section {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+        }
+
+        html.light body .section {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        html.dark body .section {
+            background: rgba(25, 25, 25, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .section {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .container {
+                gap: 16px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.25);
+        }
+
+        html.light body .section {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        html.dark body .section {
+            background: rgba(25, 25, 25, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Step Badge */
+        .step-badge {
+            background: var(--step-bg);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin-right: 10px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .view-switcher-bar {
+            grid-column: 1 / -1;
+            margin-bottom: 20px;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            background: var(--glass-bg-light);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+
+        html.dark body .view-switcher-bar {
+            background: var(--glass-bg-dark);
+            border-color: var(--border-dark);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #007bff, #00ff88);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .colorBox {
+            flex: 1;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            /* Remove overflow: hidden to allow tooltips to show */
+            border-radius: 12px;
+        }
+
+        /* Tooltip style using attr */
+        [title] {
+            position: relative;
+        }
+
+        [title]:hover::before {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            white-space: nowrap;
+            font-size: 12px;
+            z-index: 9999;
+            pointer-events: none;
+            margin-bottom: 5px;
+        }
+
+        [title]:hover::after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(5px);
+            border-width: 5px;
+            border-style: solid;
+            border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        /* Tooltip below for top elements */
+        .tooltip-bottom[title]:hover::before {
+            bottom: auto;
+            top: 100%;
+            margin-bottom: 0;
+            margin-top: 5px;
+        }
+
+        .tooltip-bottom[title]:hover::after {
+            bottom: auto;
+            top: 100%;
+            transform: translateX(-50%) translateY(-5px) rotate(180deg);
+        }
+
+        .colorLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            transition: filter 0.3s;
+            border-radius: inherit;
+            /* Maintain rounded corners */
+        }
+
+        .colorContent {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .editIcon {
+            font-size: 14px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .colorBox:hover .editIcon {
+            opacity: 1;
+        }
+
+        .colorBox:hover {
+            transform: scale(1.05) translateY(-5px);
+        }
+
+        .lockBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            width: 32px;
+            height: 32px;
+            min-height: 0;
+            /* Reset global button min-height */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 15;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .lockBtn.is-locked {
+            background: var(--primary);
+            border-color: #fff;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.6);
+        }
+
+        .lockBtn:hover {
+            transform: scale(1.2);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        html.light body .lockBtn {
+            background: rgba(255, 255, 255, 0.6);
+            border-color: rgba(0, 0, 0, 0.1);
+            color: #000;
+        }
+
+        html.light body .lockBtn.is-locked {
+            background: var(--primary);
+            color: #fff;
+            border-color: #fff;
+        }
+
+        .palette.selected {
+            outline: 3px solid var(--primary);
+            outline-offset: 4px;
+        }
+
+        /* Simulation Filters */
+        .protanopia {
+            filter: url('#protanopia');
+        }
+
+        .deuteranopia {
+            filter: url('#deuteranopia');
+        }
+
+        .tritanopia {
+            filter: url('#tritanopia');
+        }
+
+        .grayscale {
+            filter: grayscale(1);
+        }
+
+        .colorBox.selected {
+            outline: 3px solid #fff;
+            outline-offset: -3px;
+            box-shadow: 0 0 0 3px var(--primary), 0 0 30px rgba(0, 123, 255, 0.4);
+            z-index: 10;
+        }
+
+        .sim-badge {
+            display: none;
+            padding: 4px 8px;
+            background: #ffc107;
+            color: #000;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        select,
+        button,
+        input {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(128, 128, 128, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: inherit;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+
+        html.dark body select,
+        html.dark body input {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        html.dark body select:focus,
+        html.dark body input:focus {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        /* Dropdown options visibility */
+        select option {
+            background: #2d3748;
+            color: #fff;
+        }
+
+        html.light body select option {
+            background: #fff;
+            color: #333;
+        }
+
+        button {
+            cursor: pointer;
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-weight: 600;
+            min-height: 44px;
+            /* Mobile accessibility */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:hover {
+            background: #0056b3;
+            filter: brightness(1.1);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Help Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        html.dark body .modal-content {
+            background: #1e293b;
+            color: white;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        kbd {
+            background: #eee;
+            border-radius: 3px;
+            border: 1px solid #b4b4b4;
+            box-shadow: 0 1px 1px rgba(0, 0, 0, .2), 0 2px 0 0 rgba(255, 255, 255, .7) inset;
+            color: #333;
+            display: inline-block;
+            font-family: monospace;
+            font-size: .85em;
+            font-weight: 700;
+            line-height: 1;
+            padding: 2px 4px;
+            white-space: nowrap;
+        }
+
+        html.dark body kbd {
+            background: #334155;
+            border-color: #475569;
+            color: #cbd5e1;
+        }
+
+        .inputGroup input {
+            flex: 1;
+            margin-top: 0;
+            font-family: monospace;
+        }
+
+        .inputGroup button {
+            margin-top: 0;
+        }
+
+        .convGrid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .convItem label {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        /* Harmony */
+        .harmonyGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .harmonyCircle {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .harmonyCircle:hover {
+            transform: scale(1.1);
+        }
+
+        /* Mockup */
+        .mockupArea {
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(128, 128, 128, 0.2);
+            position: relative;
+            background: #fff;
+            color: #333;
+            transition: all 0.4s;
+            min-height: 300px;
+        }
+
+        .mockupArea.dark {
+            background: #111;
+            color: #eee;
+        }
+
+        .mockupContainer {
+            display: flex;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mockupSlide {
+            min-width: 100%;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        .uiHero {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .uiBtn {
+            padding: 10px 24px;
+            border-radius: 30px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .uiBtn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Product Card Mockup */
+        .productCard {
+            max-width: 200px;
+            margin: 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            background: inherit;
+            border: 1px solid rgba(128, 128, 128, 0.1);
+        }
+
+        .productImg {
+            width: 100%;
+            height: 120px;
+            background: var(--color-1);
+        }
+
+        .productContent {
+            padding: 15px;
+            text-align: left;
+        }
+
+        .productTitle {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .productPrice {
+            font-size: 16px;
+            color: var(--color-2);
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .productBtn {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 12px;
+            background: var(--color-3);
+            color: white;
+            display: block;
+            text-decoration: none;
+        }
+
+        /* Dashboard Mockup */
+        .dashboardMock {
+            display: flex;
+            height: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(128, 128, 128, 0.1);
+        }
+
+        .dashSide {
+            width: 60px;
+            background: var(--color-1);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sideItem {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+
+        .dashMain {
+            flex: 1;
+            padding: 15px;
+            background: inherit;
+        }
+
+        .dashHeader {
+            height: 20px;
+            background: rgba(128, 128, 128, 0.1);
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .dashGrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .dashStat {
+            height: 5stat;
+            background: var(--color-2);
+            border-radius: 6px;
+            opacity: 0.8;
+        }
+
+        .dashChart {
+            height: 80px;
+            background: var(--color-3);
+            border-radius: 6px;
+            margin-top: 10px;
+            opacity: 0.6;
+        }
+
+        .mockupControls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(128, 128, 128, 0.3);
+            cursor: pointer;
+        }
+
+        .dot.active {
+            background: var(--primary);
+        }
+
+        /* Help Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            background: var(--glass-bg-dark);
+            border: 1px solid var(--border-dark);
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            box-shadow: var(--shadow);
+            color: #eee;
+        }
+
+        html.light body .modal-content {
+            background: var(--glass-bg-light);
+            border-color: var(--border-light);
+            color: #333;
+        }
+
+        .close {
+            float: right;
+            cursor: pointer;
+            font-size: 24px;
+            opacity: 0.6;
+        }
+
+        .close:hover {
+            opacity: 1;
+        }
+
+        .step-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+
+        .help-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(128, 128, 128, 0.2);
+            color: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+
+        .help-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Color Input Hidden */
+        .colorPickerHidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+            z-index: 2000;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.show {
+            opacity: 1;
+            bottom: 40px;
+        }
+
+        .liveCode {
+            width: 100%;
+            height: 100px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #ffca28;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 10px;
+            resize: none;
+        }
+
+        /* 設定ボタン */
+        .settings-link {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #007bff;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            z-index: 99;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .settings-link:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        /* PC用 */
+        .pc-only {
+            display: inline-block;
+        }
+
+        .mobile-only {
+            display: none;
+        }
+
+        /* スマホ用 */
+        body.forced-mobile .pc-only {
+            display: none;
+        }
+
+        body.forced-mobile .mobile-only {
+            display: inline-block;
+            padding: 8px 12px;
+            font-size: 18px;
+        }
+
+        /* 自動判定 */
+        @media (max-width: 768px) {
+            .pc-only {
+                display: none;
+            }
+
+            .mobile-only {
+                display: inline-block;
+                padding: 8px 12px;
+                font-size: 18px;
+            }
+        }
+
+        /* PC/スマホ表示分け */
+        .pc-only {
+            display: flex !important;
+        }
+
+        .mobile-only {
+            display: none !important;
+        }
+
+        /* スマホサイズ */
+        @media (max-width: 768px) {
+            .pc-only {
+                display: none !important;
+            }
+
+            .mobile-only {
+                display: flex !important;
+            }
+        }
+
+        /* ナビゲーションボタン */
+        .nav-buttons-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 999;
+        }
+
+        .nav-buttons-container a {
+            background: #007bff;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: inline-block;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .nav-buttons-container a:nth-child(1) {
+            background: #28a745;
+        }
+
+        .nav-buttons-container a:nth-child(2) {
+            background: #fd7e14;
+        }
+
+        .nav-buttons-container a:nth-child(3) {
+            background: #007bff;
+        }
+
+        .nav-buttons-container a:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        /* PC用：テキスト表示 */
+        .nav-buttons-container a .pc-text {
+            display: inline;
+        }
+
+        .nav-buttons-container a .mobile-text {
+            display: none;
+        }
+
+        /* スマホ用：絵文字のみ表示 */
+        @media (max-width: 768px) {
+            .nav-buttons-container a .pc-text {
+                display: none;
+            }
+
+            .nav-buttons-container a .mobile-text {
+                display: inline;
+            }
+
+            .nav-buttons-container a {
+                padding: 8px 12px;
+                font-size: 16px;
+            }
+        }
+    </style>
+
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem("theme");
+
+            if (savedTheme) {
+                document.documentElement.classList.add(savedTheme);
+            } else {
+                if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+                    document.documentElement.classList.add("dark");
+                } else {
+                    document.documentElement.classList.add("light");
+                }
+            }
+        })();
+    </script>
+
+</head>
+
+<body class="dark"> <!-- Default to dark -->
+
+    <!-- 共通ナビゲーション (common.js が buildNav() で生成) -->
+    <div id="mainNav"></div>
+
+    <div id="toast" class="toast">コピーしました！</div>
+    <input type="color" id="colorPickerHidden" class="colorPickerHidden" oninput="pickerUpdate(this.value)">
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="toggleHelp()">&times;</span>
+            <h2>📖 使い方のガイド</h2>
+            <ul style="line-height: 2;">
+                <li><strong>Space</strong>: パレットを新しく生成</li>
+                <li><strong>Ctrl + Z</strong>: 元に戻す</li>
+                <li><strong>Ctrl + Y</strong>: やり直し</li>
+                <li><strong>🔒 アイコン</strong>: 色を固定して生成</li>
+                <li><strong>色をクリック</strong>: 色を選択（ピッカーで変更可）</li>
+                <li><strong>ドラッグ</strong>: 色の順番を入れ替え</li>
+            </ul>
+        </div>
+    </div>
+
+
+    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px;">
+        <h1 style="margin-bottom: 0;">🎨 Palette Generator Pro</h1>
+        <button onclick="toggleHelp()"
+            style="background: rgba(128,128,128,0.2); border-radius: 50%; width: 32px; height: 32px; padding:0;"
+            class="tooltip-bottom" title="ヘルプとショートカット">❓</button>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <!-- View Mode Switcher relocated to top for mobile visibility -->
+        <div class="view-switcher-bar">
+            <div class="tooltip-bottom" title="画面のレイアウトを切り替えます"
+                style="display: flex; background: rgba(0,0,0,0.1); border-radius: 12px; padding: 4px; gap: 4px; width: 300px;">
+                <button onclick="setViewMode('auto')" id="btn-auto"
+                    style="flex:1; background:var(--primary); font-size:12px; min-height:36px; border-radius:8px;">自動</button>
+                <button onclick="setViewMode('pc')" id="btn-pc"
+                    style="flex:1; background:transparent; color:inherit; font-size:12px; min-height:36px; border-radius:8px;">PC</button>
+                <button onclick="setViewMode('mobile')" id="btn-mobile"
+                    style="flex:1; background:transparent; color:inherit; font-size:12px; min-height:36px; border-radius:8px;">スマホ</button>
+            </div>
+        </div>
+
+        <!-- Main Column -->
+        <div class="mainCol">
+            <div class="section">
+                <h3><span class="step-badge">1</span>生成と管理</h3>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:15px;">
+                    <div>
+                        <label>色数:</label>
+                        <select id="colorCount" style="width:100%">
+                            <option value="2">2色</option>
+                            <option value="3">3色</option>
+                            <option value="4">4色</option>
+                            <option value="5" selected>5色</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>色系統:</label>
+                        <select id="colorType" style="width:100%">
+                            <option value="random">ランダム</option>
+                            <option value="red">赤</option>
+                            <option value="pink">ピンク</option>
+                            <option value="orange">オレンジ</option>
+                            <option value="yellow">黄色</option>
+                            <option value="yellowgreen">黄緑</option>
+                            <option value="green">緑</option>
+                            <option value="teal">青緑</option>
+                            <option value="blue">青</option>
+                            <option value="navy">紺</option>
+                            <option value="purple">紫</option>
+                            <option value="mono">モノクロ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>雰囲気:</label>
+                        <select id="mood" style="width:100%">
+                            <option value="normal">通常</option>
+                            <option value="pastel">パステル</option>
+                            <option value="dark">ダーク</option>
+                            <option value="vivid">ビビッド</option>
+                            <option value="natural">ナチュラル</option>
+                            <option value="cyber">サイバー</option>
+                            <option value="muted">くすみ</option>
+                            <option value="sunset">夕焼け</option>
+                            <option value="ocean">海</option>
+                            <option value="forest">森</option>
+                            <option value="cute">かわいい</option>
+                            <option value="cool">クール</option>
+                            <option value="retro">レトロ</option>
+                            <option value="luxury">高級感</option>
+                            <option value="gameui">ゲームUI</option>
+                        </select>
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <label>パレット名:</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="paletteName" placeholder="名前を入力" style="flex: 1; margin-top: 0;">
+                            <button onclick="savePalette()" title="現在のパレットを保存します"
+                                style="white-space: nowrap; margin-top: 0;">保存</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="buttonGroup">
+                    <button onclick="generatePalette()" style="flex:1" title="新しいパレットをランダムに生成します">生成 (色系統)</button>
+                    <button onclick="generateMood()" style="flex:1" title="選んだ雰囲気に合わせてパレットを生成します">生成 (雰囲気)</button>
+                    <button onclick="toggleTheme()" style="background:#555" title="ライト/ダークモードを切り替えます">🌙/☀️</button>
+                </div>
+                <div style="margin-top:10px; display:flex; gap:10px;">
+                    <select id="savedPalettes" onchange="loadSavedPalette()" style="flex:1">
+                        <option value="">保存済みからロード</option>
+                    </select>
+                    <button onclick="deletePalette()" style="background:#dc3545">削除</button>
+                </div>
+            </div>
+
+            <!-- Logical Step 2 -->
+            <div class="section">
+                <h3><span class="step-badge">2</span>画像から抽出</h3>
+                <label for="imageUpload"
+                    style="cursor: pointer; display: block; padding: 12px; background: rgba(128,128,128,0.1); border: 2px dashed rgba(128,128,128,0.3); border-radius: 8px; text-align: center;">画像ファイルをドロップまたはクリック</label>
+                <input type="file" id="imageUpload" accept="image/*" style="display: none;"
+                    onchange="extractColorsFromImage(event)">
+            </div>
+
+            <!-- Logical Step 3 -->
+            <div class="section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3><span class="step-badge">3</span>ライブパレット</h3>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="reversePalette()" title="反転"
+                            style="padding: 5px 8px; background:#6c757d">↕️</button>
+                        <button onclick="shufflePalette()" title="シャッフル"
+                            style="padding: 5px 8px; background:#6c757d">🔀</button>
+                        <button onclick="copyAllHex()" title="全コピー"
+                            style="padding: 5px 8px; background:#28a745">📋</button>
+                        <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 0 5px;"></div>
+                        <button id="undoBtn" onclick="undo()" disabled
+                            style="padding: 5px 10px; background:#6c757d">↩️</button>
+                        <button id="redoBtn" onclick="redo()" disabled
+                            style="padding: 5px 10px; background:#6c757d">↪️</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <select id="simSelect" onchange="updateSimulation()" style="width:100%; margin-top: 0;">
+                            <option value="none">視覚特性のシミュレーションなし</option>
+                            <option value="protanopia">1型2色覚 (赤微弱)</option>
+                            <option value="deuteranopia">2型2色覚 (緑微弱)</option>
+                            <option value="tritanopia">3型2色覚 (青微弱)</option>
+                            <option value="grayscale">モノクロ (白黒)</option>
+                        </select>
+                    </div>
+                    <div id="simBadge" class="sim-badge" style="margin-bottom: 0;">⚠️ シミュレーション実行中</div>
+                </div>
+
+                <div id="palette" class="palette"></div>
+                <p style="font-size: 11px; opacity:0.6; text-align:center">ドラッグで並び替え / Spaceで生成 / Ctrl+Zで戻る</p>
+            </div>
+
+            <!-- Relocated Step 3 below Step 2 -->
+
+            <div class="section">
+                <h3><span class="step-badge">4</span>微調整 & グラデーション</h3>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div>
+                        <label>色相: <span id="hueValue">180</span>°, 彩度: <span id="satValue">70</span>%, 明度: <span
+                                id="lightValue">50</span>%</label>
+                        <input type="range" id="hue" min="0" max="360" value="180" oninput="updateHSLDisplay()">
+                        <input type="range" id="sat" min="0" max="100" value="70" oninput="updateHSLDisplay()">
+                        <input type="range" id="light" min="0" max="100" value="50" oninput="updateHSLDisplay()">
+                        <button onclick="applyAdjust()" style="width:100%">選択色に適用</button>
+                    </div>
+                    <div>
+                        <label>グラデーション角度: <span id="angleValue">90</span>°</label>
+                        <input type="range" id="angle" min="0" max="360" value="90" oninput="updateGradient()">
+                        <div id="gradientPreview"
+                            style="height:64px; border-radius:12px; margin:10px 0; border: 1px solid rgba(128,128,128,0.2)">
+                        </div>
+                        <input type="hidden" id="gradientCSS">
+                        <button onclick="copyGradient()" style="width:100%">CSSコピー</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Column -->
+        <div class="sideCol">
+            <div class="section">
+                <h3>🌓 Shades & Tints</h3>
+                <div id="shadesContainer" style="display: flex; flex-direction: column; gap: 4px;">
+                    <!-- Dynamically filled -->
+                </div>
+            </div>
+            <div class="section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3>UI Previews</h3>
+                    <button onclick="toggleMockupMode()"
+                        style="padding: 4px 8px; font-size: 10px; background: #666;">☀️/🌙 Preview</button>
+                </div>
+                <div id="mockupPreview" class="mockupArea">
+                    <div id="mockupContainer" class="mockupContainer">
+                        <!-- Hero Slide -->
+                        <div class="mockupSlide">
+                            <div id="uiHero" class="uiHero">
+                                <h2 id="uiHeader" style="margin:0; font-size:24px;">Beautiful Palette</h2>
+                                <p id="uiText" style="font-size:12px; margin:10px 0;">あなたの配色が最高のデザインを作ります。</p>
+                                <a href="#" id="uiButton" class="uiBtn">アクション</a>
+                            </div>
+                        </div>
+                        <!-- Product Slide -->
+                        <div class="mockupSlide">
+                            <div class="productCard">
+                                <div class="productImg"></div>
+                                <div class="productContent">
+                                    <p class="productTitle">Premium Template</p>
+                                    <p class="productPrice">$29.00</p>
+                                    <a href="#" class="productBtn">Buy Now</a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Dashboard Slide -->
+                        <div class="mockupSlide">
+                            <div class="dashboardMock">
+                                <div class="dashSide">
+                                    <div class="sideItem"></div>
+                                    <div class="sideItem"></div>
+                                    <div class="sideItem"></div>
+                                </div>
+                                <div class="dashMain">
+                                    <div class="dashHeader"></div>
+                                    <div class="dashGrid">
+                                        <div class="dashStat"></div>
+                                        <div class="dashStat"></div>
+                                    </div>
+                                    <div class="dashChart"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mockupControls">
+                    <div class="dot active" onclick="switchMockup(0)"></div>
+                    <div class="dot" onclick="switchMockup(1)"></div>
+                    <div class="dot" onclick="switchMockup(2)"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3><span class="step-badge">5</span>分析とアクセシビリティ</h3>
+                <div id="contrastLabel" style="font-size:11px; margin-bottom:10px;"></div>
+
+                <label style="font-size:11px">コントラスト・マトリックス</label>
+                <div id="contrastGrid" style="margin-top:5px; overflow-x:auto;"></div>
+
+                <div style="margin-top:20px;">
+                    <label style="font-size:11px">可読性プレビュー</label>
+                    <div id="legibilityPreview"
+                        style="padding:15px; border-radius:12px; border: 1px solid rgba(128,128,128,0.2); margin-top:5px;">
+                        <p style="font-size: 24px; margin:0; font-weight:bold;">Large Text (24px)</p>
+                        <p style="font-size: 16px; margin:5px 0;">Medium Text (16px) - The quick brown fox jumps over
+                            the lazy dog.</p>
+                        <p style="font-size: 12px; margin:0;">Small Text (12px) - 配色のバランスを確認するためのサンプルテキストです。</p>
+                    </div>
+                </div>
+
+                <!-- Simulation relocated to Palette section -->
+            </div>
+
+            <div class="section">
+                <h3>🔗 ハーモニー設定</h3>
+                <div id="harmonyContainer" class="harmonyGrid"></div>
+            </div>
+
+            <div class="section">
+                <h3><span class="step-badge">6</span>書き出しと変換</h3>
+                <div class="convGrid">
+                    <div class="inputGroup"><input type="text" id="convHex"
+                            onchange="manualColorInput(this.value)"><button
+                            onclick="copyFromInput('convHex')">HEX</button></div>
+                    <div class="inputGroup"><input type="text" id="convRgb" readonly><button
+                            onclick="copyFromInput('convRgb')">RGB</button></div>
+                </div>
+                <textarea id="liveCode" class="liveCode" readonly></textarea>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
+                    <button onclick="exportJSON()" style="background:#444; font-size: 11px;">JSON</button>
+                    <button onclick="exportCSS()" style="background:#444; font-size: 11px;">CSS Vars</button>
+                    <button onclick="exportTailwind()" style="background:#444; font-size: 11px;">Tailwind</button>
+                    <button onclick="exportSCSS()" style="background:#444; font-size: 11px;">SCSS</button>
+                    <button onclick="exportSVG()" style="background:#444; font-size: 11px;">SVG Swatch</button>
+                    <button onclick="exportPNG()" style="background:#28a745; font-size: 11px;">PNG保存</button>
+                </div>
+                <button onclick="sharePalette()"
+                    style="background:#007bff; width: 100%; margin-top: 8px;">共有URLをコピー</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulation Filters -->
+    <svg style="position: absolute; width: 0; height: 0; pointer-events: none;">
+        <defs>
+            <filter id="protanopia">
+                <feColorMatrix type="matrix"
+                    values="0.567, 0.433, 0, 0, 0, 0.558, 0.442, 0, 0, 0, 0, 0.242, 0.758, 0, 0, 0, 0, 0, 1, 0" />
+            </filter>
+            <filter id="deuteranopia">
+                <feColorMatrix type="matrix"
+                    values="0.625, 0.375, 0, 0, 0, 0.7, 0.3, 0, 0, 0, 0, 0.3, 0.7, 0, 0, 0, 0, 0, 1, 0" />
+            </filter>
+            <filter id="tritanopia">
+                <feColorMatrix type="matrix"
+                    values="0.95, 0.05, 0, 0, 0, 0, 0.433, 0.567, 0, 0, 0, 0, 0.475, 0.525, 0, 0, 0, 0, 0, 1, 0" />
+            </filter>
+        </defs>
+    </svg>
+    <script src="auth.js"></script>
+    <script src="common.js"></script>
+    <script>
+        let currentPalette = [];
+        let locked = [];
+        let selectedIndex = null;
+        let paletteHistory = [];
+        let redoHistory = [];
+
+        function updateHistoryButtons() {
+            const undoBtn = document.getElementById("undoBtn");
+            if (undoBtn) undoBtn.disabled = paletteHistory.length === 0;
+            const redoBtn = document.getElementById("redoBtn");
+            if (redoBtn) redoBtn.disabled = redoHistory.length === 0;
+        }
+
+        function saveState() {
+            paletteHistory.push({
+                palette: [...currentPalette],
+                locked: [...locked]
+            });
+            if (paletteHistory.length > 20) paletteHistory.shift();
+            redoHistory = [];
+            updateHistoryButtons();
+        }
+
+        function undo() {
+            if (paletteHistory.length === 0) return;
+            redoHistory.push({
+                palette: [...currentPalette],
+                locked: [...locked]
+            });
+            const prevState = paletteHistory.pop();
+            currentPalette = [...prevState.palette];
+            locked = [...prevState.locked];
+            renderPalette();
+            updateHistoryButtons();
+        }
+
+        function redo() {
+            if (redoHistory.length === 0) return;
+            paletteHistory.push({
+                palette: [...currentPalette],
+                locked: [...locked]
+            });
+            const nextState = redoHistory.pop();
+            currentPalette = [...nextState.palette];
+            locked = [...nextState.locked];
+            renderPalette();
+            updateHistoryButtons();
+        }
+
+        function getHueRange(type) {
+            switch (type) {
+                case "red": return [0, 20];
+                case "pink": return [300, 340];
+                case "orange": return [20, 45];
+                case "yellow": return [45, 65];
+                case "yellowgreen": return [65, 90];
+                case "green": return [90, 150];
+                case "teal": return [150, 180];
+                case "blue": return [180, 240];
+                case "navy": return [220, 260];
+                case "purple": return [260, 300];
+                case "mono": return null;
+                default: return [0, 360];
+            }
+        }
+
+        function randomColor() {
+            const type = document.getElementById("colorType").value;
+            if (type === "mono") {
+                const l = Math.floor(30 + Math.random() * 40);
+                const v = Math.round(l * 2.55).toString(16).padStart(2, "0");
+                return "#" + v + v + v;
+            }
+            const range = getHueRange(type);
+            const h = Math.floor(Math.random() * (range[1] - range[0]) + range[0]);
+            const s = 60 + Math.random() * 30;
+            const l = 45 + Math.random() * 25;
+            return hslToHex(h, s, l);
+        }
+
+        function hslToHex(h, s, l) {
+            s /= 100; l /= 100;
+            const k = n => (n + h / 30) % 12;
+            const a = s * Math.min(l, 1 - l);
+            const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+            const toHex = x => Math.round(x * 255).toString(16).padStart(2, "0");
+            return "#" + toHex(f(0)) + toHex(f(8)) + toHex(f(4));
+        }
+
+        function getLuminance(hex) {
+            hex = hex.replace("#", "");
+            const r = parseInt(hex.substr(0, 2), 16) / 255;
+            const g = parseInt(hex.substr(2, 2), 16) / 255;
+            const b = parseInt(hex.substr(4, 2), 16) / 255;
+            const convert = c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+            return 0.2126 * convert(r) + 0.7152 * convert(g) + 0.0722 * convert(b);
+        }
+
+        function getTextColor(hex) {
+            return getLuminance(hex) > 0.179 ? "black" : "white";
+        }
+
+        function getColorName(hex) {
+            const r = parseInt(hex.substr(1, 2), 16);
+            const g = parseInt(hex.substr(3, 2), 16);
+            const b = parseInt(hex.substr(5, 2), 16);
+            const names = [
+                { name: "レッド", r: 255, g: 0, b: 0 },
+                { name: "ブルー", r: 0, g: 0, b: 255 },
+                { name: "グリーン", r: 0, g: 255, b: 0 },
+                { name: "イエロー", r: 255, g: 255, b: 0 },
+                { name: "ホワイト", r: 255, g: 255, b: 255 },
+                { name: "ブラック", r: 0, g: 0, b: 0 },
+                { name: "グレー", r: 128, g: 128, b: 128 },
+                { name: "オレンジ", r: 255, g: 165, b: 0 },
+                { name: "パープル", r: 128, g: 0, b: 128 },
+                { name: "シアン", r: 0, g: 255, b: 255 },
+                { name: "マゼンタ", r: 255, g: 0, b: 255 },
+                { name: "ネイビー", r: 0, g: 0, b: 128 },
+                { name: "オリーブ", r: 128, g: 128, b: 0 },
+                { name: "ティール", r: 0, g: 128, b: 128 },
+                { name: "ブラウン", r: 165, g: 42, b: 42 }
+            ];
+            let min = Infinity, closest = "カスタムカラー";
+            names.forEach(n => {
+                const dist = Math.sqrt((r - n.r) ** 2 + (g - n.g) ** 2 + (b - n.b) ** 2);
+                if (dist < min) { min = dist; closest = n.name; }
+            });
+            return closest;
+        }
+
+        function hexToRgb(hex) {
+            hex = hex.replace("#", "");
+            if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return { r, g, b };
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) h = s = 0;
+            else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+        }
+
+        function rgbToCmyk(r, g, b) {
+            let c = 1 - (r / 255);
+            let m = 1 - (g / 255);
+            let y = 1 - (b / 255);
+            let k = Math.min(c, Math.min(m, y));
+            if (k === 1) return { c: 0, m: 0, y: 0, k: 100 };
+            c = Math.round((c - k) / (1 - k) * 100);
+            m = Math.round((m - k) / (1 - k) * 100);
+            y = Math.round((y - k) / (1 - k) * 100);
+            k = Math.round(k * 100);
+            return { c, m, y, k };
+        }
+
+        function updateConversionUI() {
+            try {
+                const idx = selectedIndex !== null ? selectedIndex : 0;
+                const color = (currentPalette[idx] || "#FFFFFF").toUpperCase();
+                const rgb = hexToRgb(color);
+                const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+                const cmyk = rgbToCmyk(rgb.r, rgb.g, rgb.b);
+
+                const hexInput = document.getElementById("convHex");
+                const rgbInput = document.getElementById("convRgb");
+                const hslInput = document.getElementById("convHsl");
+                const cmykInput = document.getElementById("convCmyk");
+
+                if (hexInput) hexInput.value = color.replace("#", "");
+                if (rgbInput) rgbInput.value = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                if (hslInput) hslInput.value = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+                if (cmykInput) cmykInput.value = `cmyk(${cmyk.c}%, ${cmyk.m}%, ${cmyk.y}%, ${cmyk.k}%)`;
+
+                updateHarmony(hsl);
+                updateMockup();
+            } catch (e) {
+                console.error("Conversion UI Error:", e);
+            }
+        }
+
+        // Add smooth fade-in to newly rendered elements
+        function animateSidebar() {
+            const sidebar = document.querySelector('.sideCol');
+            sidebar.style.opacity = '0';
+            sidebar.style.transform = 'translateX(20px)';
+            setTimeout(() => {
+                sidebar.style.transition = 'all 0.6s ease-out';
+                sidebar.style.opacity = '1';
+                sidebar.style.transform = 'translateX(0)';
+            }, 50);
+        }
+
+        function updateHarmony(hsl) {
+            const container = document.getElementById("harmonyContainer");
+            container.innerHTML = "";
+            const harmonies = [
+                { label: "補色", h: (hsl.h + 180) % 360 },
+                { label: "類似 1", h: (hsl.h + 30) % 360 },
+                { label: "類似 2", h: (hsl.h - 30 + 360) % 360 },
+                { label: "トライアド 1", h: (hsl.h + 120) % 360 },
+                { label: "トライアド 2", h: (hsl.h + 240) % 360 },
+                { label: "分裂補色 1", h: (hsl.h + 150) % 360 },
+                { label: "分裂補色 2", h: (hsl.h + 210) % 360 },
+                { label: "テトラディック 1", h: (hsl.h + 90) % 360 },
+                { label: "テトラディック 2", h: (hsl.h + 270) % 360 }
+            ];
+            harmonies.forEach(item => {
+                const hex = hslToHex(item.h, hsl.s, hsl.l);
+                const div = document.createElement("div");
+                div.className = "harmonyItem";
+                div.innerHTML = `
+                    <div class="harmonyCircle" style="background:${hex};" onclick="applyHarmony('${hex}')"></div>
+                    <div class="harmonyLabel" style="font-size:9px; width:70px;">${item.label}<br>${hex}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateMockup() {
+            try {
+                const c1 = currentPalette[0] || "#FFFFFF";
+                const c2 = currentPalette[1] || "#333333";
+                const c3 = currentPalette[2] || "#007bff";
+                const hero = document.getElementById("uiHero");
+                const btn = document.getElementById("uiButton");
+                const head = document.getElementById("uiHeader");
+                const txt = document.getElementById("uiText");
+
+                if (hero) {
+                    hero.style.background = c1;
+                    txt.style.color = getTextColor(c1);
+                    head.style.color = c2;
+                    btn.style.background = c3;
+                    btn.style.color = getTextColor(c3);
+                }
+
+                // Update CSS variables for mockups
+                const mockupArea = document.getElementById("mockupPreview");
+                if (mockupArea) {
+                    currentPalette.forEach((c, i) => {
+                        mockupArea.style.setProperty(`--color-${i + 1}`, c);
+                    });
+                }
+
+                let vars = ":root {\n";
+                currentPalette.forEach((c, i) => { vars += `  --color-${i + 1}: ${c};\n`; });
+                vars += "}";
+                const liveCode = document.getElementById("liveCode");
+                if (liveCode) liveCode.value = vars;
+            } catch (e) {
+                console.error("Mockup Error:", e);
+            }
+        }
+
+        function switchMockup(index) {
+            const container = document.getElementById("mockupContainer");
+            if (container) container.style.transform = `translateX(-${index * 100}%)`;
+
+            const dots = document.querySelectorAll(".dot");
+            dots.forEach((dot, i) => {
+                dot.classList.toggle("active", i === index);
+            });
+        }
+
+        function toggleMockupMode() {
+            const mockup = document.getElementById("mockupPreview");
+            if (mockup) mockup.classList.toggle("dark");
+        }
+
+        function applyHarmony(hex) {
+            if (selectedIndex === null) {
+                const toast = document.getElementById("toast");
+                toast.textContent = "まずは色を選択してください";
+                toast.classList.add("show");
+                setTimeout(() => toast.classList.remove("show"), 2000);
+                return;
+            }
+            saveState();
+            currentPalette[selectedIndex] = hex;
+            renderPalette();
+        }
+
+        function updateSimulation() {
+            const simSelect = document.getElementById("simSelect");
+            if (!simSelect) return;
+            const mode = simSelect.value;
+            const mockup = document.getElementById("mockupPreview");
+            const layers = document.querySelectorAll(".colorLayer");
+            const badge = document.getElementById("simBadge");
+
+            const classes = ["protanopia", "deuteranopia", "tritanopia", "grayscale"];
+
+            layers.forEach(el => {
+                el.classList.remove(...classes);
+                if (mode !== "none") el.classList.add(mode);
+            });
+
+            if (mockup) {
+                mockup.classList.remove(...classes);
+                if (mode !== "none") mockup.classList.add(mode);
+            }
+
+            if (badge) badge.style.display = (mode === "none" ? "none" : "block");
+        }
+
+        function exportJSON() {
+            const data = JSON.stringify(currentPalette, null, 2);
+            const blob = new Blob([data], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = "palette.json"; a.click();
+        }
+
+        function exportCSS() {
+            let css = ":root {\n";
+            currentPalette.forEach((c, i) => { css += `  --color-${i + 1}: ${c};\n`; });
+            css += "}";
+            downloadFile(css, "variables.css", "text/css");
+        }
+
+        function exportTailwind() {
+            let tw = "module.exports = {\n  theme: {\n    extend: {\n      colors: {\n";
+            currentPalette.forEach((c, i) => { tw += `        'palette-${i + 1}': '${c}',\n`; });
+            tw += "      }\n    }\n  }\n}";
+            downloadFile(tw, "tailwind.config.js", "application/javascript");
+        }
+
+        function exportSCSS() {
+            let scss = "";
+            currentPalette.forEach((c, i) => { scss += `$color-${i + 1}: ${c};\n`; });
+            downloadFile(scss, "_variables.scss", "text/x-scss");
+        }
+
+        function exportSVG() {
+            const size = 100;
+            let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${currentPalette.length * size}" height="${size}">\n`;
+            currentPalette.forEach((c, i) => {
+                svg += `  <rect x="${i * size}" y="0" width="${size}" height="${size}" fill="${c}" />\n`;
+            });
+            svg += "</svg>";
+            downloadFile(svg, "palette.svg", "image/svg+xml");
+        }
+
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type: type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = filename; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Keyboard Shortcuts
+        window.addEventListener("keydown", (e) => {
+            if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+            if (e.code === "Space") { e.preventDefault(); generatePalette(); }
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === "z") { e.preventDefault(); undo(); }
+                if (e.key === "y") { e.preventDefault(); redo(); }
+                if (e.key === "s") { e.preventDefault(); savePalette(); }
+            }
+        });
+
+        function syncHSLSliders() {
+            if (selectedIndex === null) return;
+            const color = currentPalette[selectedIndex];
+            const rgb = hexToRgb(color);
+            const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+            document.getElementById("hue").value = hsl.h;
+            document.getElementById("sat").value = hsl.s;
+            document.getElementById("light").value = hsl.l;
+            updateHSLDisplay();
+        }
+
+        function manualColorInput(val) {
+            const idx = selectedIndex !== null ? selectedIndex : 0;
+            if (!val.startsWith("#")) val = "#" + val;
+            if (/^#[0-9A-F]{6}$/i.test(val) || /^#[0-9A-F]{3}$/i.test(val)) {
+                saveState();
+                currentPalette[idx] = val.toUpperCase();
+                renderPalette();
+            } else {
+                alert("有効なカラーコードを入力してください (例: #FFFFFF)");
+                updateConversionUI();
+            }
+        }
+
+        function copyFromInput(id) {
+            const input = document.getElementById(id);
+            copyToClipboard(input.value, "コピーしました！");
+        }
+        // showToast は common.js を使用
+
+        function copyToClipboard(text, msg) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(msg || text + " をコピーしました！");
+            });
+        }
+
+        function reversePalette() {
+            saveState();
+            currentPalette.reverse();
+            locked.reverse();
+            renderPalette();
+        }
+
+        function shufflePalette() {
+            saveState();
+            // Only shuffle unlocked colors
+            const unlockedIndices = currentPalette.map((_, i) => i).filter(i => !locked[i]);
+            const unlockedColors = unlockedIndices.map(i => currentPalette[i]);
+
+            for (let i = unlockedColors.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [unlockedColors[i], unlockedColors[j]] = [unlockedColors[j], unlockedColors[i]];
+            }
+
+            unlockedIndices.forEach((idx, i) => {
+                currentPalette[idx] = unlockedColors[i];
+            });
+            renderPalette();
+        }
+
+        function copyAllHex() {
+            const hexes = currentPalette.join(", ");
+            navigator.clipboard.writeText(hexes);
+            const toast = document.getElementById("toast");
+            toast.textContent = "全色コピーしました！";
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 2000);
+        }
+
+        function updateShades() {
+            const container = document.getElementById("shadesContainer");
+            if (!container) return;
+            container.innerHTML = "";
+
+            const idx = selectedIndex !== null ? selectedIndex : 0;
+            const color = currentPalette[idx] || "#FFFFFF";
+            const rgb = hexToRgb(color);
+            const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+
+            // Tints to Shades (10% steps)
+            for (let l = 90; l >= 10; l -= 10) {
+                const hex = hslToHex(hsl.h, hsl.s, l);
+                const item = document.createElement("div");
+                item.style.display = "flex";
+                item.style.alignItems = "center";
+                item.style.gap = "8px";
+                item.style.cursor = "pointer";
+                item.onclick = () => { saveState(); currentPalette[idx] = hex; renderPalette(); };
+
+                const box = document.createElement("div");
+                box.style.width = "40px";
+                box.style.height = "24px";
+                box.style.background = hex;
+                box.style.borderRadius = "4px";
+                box.style.border = "1px solid rgba(128,128,128,0.2)";
+
+                const label = document.createElement("span");
+                label.style.fontSize = "11px";
+                label.style.fontFamily = "monospace";
+                label.textContent = hex.toUpperCase() + (l === hsl.l ? " (Current)" : "");
+                if (Math.abs(l - hsl.l) < 5) label.style.fontWeight = "bold";
+
+                item.appendChild(box);
+                item.appendChild(label);
+                container.appendChild(item);
+            }
+        }
+
+        function renderPalette() {
+            const container = document.getElementById("palette");
+            container.innerHTML = "";
+            currentPalette.forEach((color, index) => {
+                const div = document.createElement("div");
+                div.className = "colorBox";
+                div.style.color = getTextColor(color);
+                if (locked[index]) div.classList.add("locked");
+                if (selectedIndex === index) div.classList.add("selected");
+
+                const layer = document.createElement("div");
+                layer.className = "colorLayer";
+                layer.style.background = color;
+                // Maintain simulation if active
+                const mode = document.getElementById("simSelect").value;
+                if (mode !== "none") layer.classList.add(mode);
+
+                const content = document.createElement("div");
+                content.className = "colorContent";
+
+                const code = document.createElement("div");
+                code.textContent = color.replace("#", "").toUpperCase();
+
+                const editHint = document.createElement("div");
+                editHint.className = "editIcon";
+                editHint.innerHTML = "✎"; // Pencil icon
+                editHint.title = "クリックして色を直接編集";
+                editHint.style.pointerEvents = "auto";
+                editHint.onclick = (e) => {
+                    e.stopPropagation();
+                    saveState();
+                    const picker = document.getElementById("colorPickerHidden");
+                    selectedIndex = index;
+                    picker.value = color;
+                    picker.click();
+                };
+
+                content.appendChild(code);
+                content.appendChild(editHint);
+
+                div.ondblclick = () => {
+                    saveState();
+                    const picker = document.getElementById("colorPickerHidden");
+                    selectedIndex = index;
+                    picker.value = color;
+                    picker.click();
+                };
+
+                const lockBtn = document.createElement("button");
+                lockBtn.className = "lockBtn";
+                if (locked[index]) lockBtn.classList.add("is-locked");
+                lockBtn.style.pointerEvents = "auto";
+                lockBtn.textContent = locked[index] ? "🔒" : "🔓";
+                lockBtn.title = locked[index] ? "固定解除" : "この色を固定";
+                lockBtn.onclick = (e) => { e.stopPropagation(); toggleLock(index); };
+
+                content.appendChild(code);
+                div.appendChild(layer);
+                div.appendChild(content);
+                div.appendChild(lockBtn);
+
+                div.onclick = (e) => {
+                    if (selectedIndex === index) {
+                        saveState();
+                        const picker = document.getElementById("colorPickerHidden");
+                        picker.value = color;
+                        picker.click();
+                    }
+                    selectedIndex = index;
+                    renderPalette();
+
+                    const hex = color.replace("#", "").toUpperCase();
+                    navigator.clipboard.writeText(hex);
+                    const toast = document.getElementById("toast");
+                    toast.textContent = hex + " (" + getColorName(color) + ") をコピーしました！";
+                    toast.classList.add("show");
+                    setTimeout(() => toast.classList.remove("show"), 2000);
+                };
+
+                div.draggable = true;
+                div.ondragstart = (e) => { e.dataTransfer.setData("text/plain", index); div.style.opacity = "0.5"; };
+                div.ondragend = () => div.style.opacity = "1";
+                div.ondragover = (e) => e.preventDefault();
+                div.ondrop = (e) => {
+                    e.preventDefault();
+                    const fromIndex = parseInt(e.dataTransfer.getData("text/plain"));
+                    if (fromIndex === index || isNaN(fromIndex)) return;
+                    saveState();
+                    [currentPalette[fromIndex], currentPalette[index]] = [currentPalette[index], currentPalette[fromIndex]];
+                    [locked[fromIndex], locked[index]] = [locked[index], locked[fromIndex]];
+                    if (selectedIndex === fromIndex) selectedIndex = index;
+                    else if (selectedIndex === index) selectedIndex = fromIndex;
+                    renderPalette();
+                };
+
+                container.appendChild(div);
+            });
+            updateGradient();
+            checkContrast();
+            updateConversionUI();
+            syncHSLSliders();
+            updateShades();
+        }
+
+        function checkContrast() {
+            const c1 = currentPalette[0] || "#FFFFFF";
+            const c2 = currentPalette[1] || "#000000";
+            const l1 = getLuminance(c1) + 0.05;
+            const l2 = getLuminance(c2) + 0.05;
+            const ratio = l1 > l2 ? l1 / l2 : l2 / l1;
+            const res = document.getElementById("contrastResult");
+            const label = document.getElementById("contrastLabel");
+
+            if (!res || !label) return;
+
+            label.innerHTML = `<strong>1色目</strong> (${c1}) vs <strong>2色目</strong> (${c2})`;
+
+            const aa = ratio >= 4.5 ? "✅ 合格 (Normal)" : "❌ 不合格 (Normal)";
+            const aaa = ratio >= 7 ? "✅ 合格 (Enhanced)" : "❌ 不合格 (Enhanced)";
+            const large = ratio >= 3 ? "✅ 合格 (Large Text)" : "❌ 不合格 (Large Text)";
+
+            res.style.background = c1;
+            res.style.color = c2;
+            res.innerHTML = `
+                比率: <strong>${ratio.toFixed(2)}:1</strong><br>
+                WCAG AA: ${aa}<br>
+                WCAG AAA: ${aaa}<br>
+                Large Text: ${large}
+            `;
+        }
+
+        function toggleLock(index) {
+            locked[index] = !locked[index];
+            renderPalette();
+        }
+
+        function generatePalette() {
+            saveState();
+            const countEl = document.getElementById("colorCount");
+            if (!countEl) return;
+            const count = parseInt(countEl.value) || 5;
+            currentPalette.length = count;
+            locked.length = count;
+            for (let i = 0; i < count; i++) {
+                if (locked[i] === undefined) locked[i] = false;
+                if (!locked[i] || !currentPalette[i]) currentPalette[i] = randomColor();
+            }
+            renderPalette();
+        }
+
+        function extractColorsFromImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function () {
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+                    const MAX_SIZE = 400;
+                    let w = img.width, h = img.height;
+                    if (w > h && w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; }
+                    else if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; }
+                    canvas.width = w; canvas.height = h;
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    const countEl = document.getElementById("colorCount");
+                    const count = countEl ? parseInt(countEl.value) : 5;
+                    const imageData = ctx.getImageData(0, 0, w, h).data;
+                    const samples = [];
+                    // Sample colors from various points
+                    for (let i = 0; i < imageData.length; i += 4 * 10) { // Sample every 10th pixel
+                        samples.push([imageData[i], imageData[i + 1], imageData[i + 2]]);
+                    }
+
+                    // Simple "K-means like" quantization (just picking distinct ones for now)
+                    const extracted = [];
+                    const minDist = 30; // Threshold for distinctness
+
+                    // Priority: Brightest/Strongest colors first
+                    samples.sort((a, b) => {
+                        const satA = Math.max(a[0], a[1], a[2]) - Math.min(a[0], a[1], a[2]);
+                        const satB = Math.max(b[0], b[1], b[2]) - Math.min(b[0], b[1], b[2]);
+                        return satB - satA;
+                    });
+
+                    for (const s of samples) {
+                        const hex = "#" + ((1 << 24) + (s[0] << 16) + (s[1] << 8) + s[2]).toString(16).slice(1);
+                        if (extracted.length >= count) break;
+
+                        let isDistinct = true;
+                        for (const ex of extracted) {
+                            const rgbEx = hexToRgb(ex);
+                            const dist = Math.sqrt((s[0] - rgbEx.r) ** 2 + (s[1] - rgbEx.g) ** 2 + (s[2] - rgbEx.b) ** 2);
+                            if (dist < minDist) { isDistinct = false; break; }
+                        }
+                        if (isDistinct) extracted.push(hex.toUpperCase());
+                    }
+
+                    // Fill if not enough
+                    while (extracted.length < count) extracted.push(randomColor());
+
+                    saveState();
+                    currentPalette.length = count;
+                    locked.length = count;
+                    for (let j = 0; j < count; j++) if (!locked[j]) currentPalette[j] = extracted[j];
+                    renderPalette();
+                    event.target.value = '';
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function generateMood() {
+            saveState();
+            const mood = document.getElementById("mood").value;
+            const count = parseInt(document.getElementById("colorCount").value);
+            currentPalette.length = count; locked.length = count;
+            const newColors = generateColors(mood, count);
+            for (let i = 0; i < count; i++) {
+                if (locked[i] === undefined) locked[i] = false;
+                if (!locked[i] || !currentPalette[i]) currentPalette[i] = newColors[i];
+            }
+            renderPalette();
+        }
+
+        function generateColors(mood, count) {
+            let palette = [];
+            for (let i = 0; i < count; i++) {
+                let h = Math.floor(Math.random() * 360), s = 70, l = 50;
+                if (mood === "pastel") { s = 40 + Math.random() * 20; l = 70 + Math.random() * 15; }
+                else if (mood === "dark") { s = 40 + Math.random() * 30; l = 25 + Math.random() * 15; }
+                else if (mood === "vivid") { s = 80 + Math.random() * 20; l = 45 + Math.random() * 15; }
+                else if (mood === "natural") { s = 30 + Math.random() * 25; l = 45 + Math.random() * 20; }
+                else if (mood === "cyber") { s = 90; l = 50; }
+                else if (mood === "muted") { s = 25 + Math.random() * 20; l = 50 + Math.random() * 10; }
+                else if (mood === "sunset") { h = 10 + Math.random() * 50; }
+                else if (mood === "ocean") { h = 180 + Math.random() * 60; }
+                else if (mood === "forest") { h = 90 + Math.random() * 60; }
+                else if (mood === "cute") { h = 300 + Math.random() * 60; s = 80; l = 75; }
+                else if (mood === "cool") { h = 190 + Math.random() * 40; s = 60; l = 50; }
+                else if (mood === "retro") { s = 40; l = 50; }
+                else if (mood === "luxury") { h = 30 + Math.random() * 20; s = 40; l = 30; }
+                palette.push(hslToHex(h, s, l));
+            }
+            return palette;
+        }
+
+        function applyAdjust() {
+            if (selectedIndex === null) { alert("色を選択してください"); return; }
+            saveState();
+            const h = parseInt(document.getElementById("hue").value);
+            const s = parseInt(document.getElementById("sat").value);
+            const l = parseInt(document.getElementById("light").value);
+            currentPalette[selectedIndex] = hslToHex(h, s, l);
+            renderPalette();
+        }
+
+        function updateHSLDisplay() {
+            document.getElementById("hueValue").textContent = document.getElementById("hue").value;
+            document.getElementById("satValue").textContent = document.getElementById("sat").value;
+            document.getElementById("lightValue").textContent = document.getElementById("light").value;
+        }
+
+        function updateGradient() {
+            const angle = document.getElementById("angle").value;
+            document.getElementById("angleValue").textContent = angle;
+            if (currentPalette.length < 2) return;
+            const grad = `linear-gradient(${angle}deg, ${currentPalette.join(", ")})`;
+            document.getElementById("gradientPreview").style.background = grad;
+            document.getElementById("gradientCSS").value = `background: ${grad};`;
+        }
+
+        function copyGradient() {
+            navigator.clipboard.writeText(document.getElementById("gradientCSS").value);
+            const toast = document.getElementById("toast");
+            toast.textContent = "CSSをコピーしました！";
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 2000);
+        }
+
+        function checkContrast() {
+            if (currentPalette.length < 1) return;
+            const idx1 = selectedIndex !== null ? selectedIndex : 0;
+            const idx2 = (idx1 + 1) % currentPalette.length;
+            const c1 = currentPalette[idx1], c2 = currentPalette[idx2];
+
+            document.getElementById("contrastLabel").textContent = `${idx1 + 1}色目 × ${idx2 + 1}色目 のコントラスト`;
+
+            // Legibility Preview
+            const legibility = document.getElementById("legibilityPreview");
+            legibility.style.background = c1;
+            legibility.style.color = c2;
+
+            // Matrix Grid
+            const grid = document.getElementById("contrastGrid");
+            grid.innerHTML = "";
+            const table = document.createElement("table");
+            table.style.width = "100%";
+            table.style.borderCollapse = "collapse";
+            table.style.fontSize = "10px";
+
+            // Header
+            const trH = document.createElement("tr");
+            trH.innerHTML = "<th></th>" + currentPalette.map((_, i) => `<th>${i + 1}</th>`).join("");
+            table.appendChild(trH);
+
+            currentPalette.forEach((cBg, i) => {
+                const tr = document.createElement("tr");
+                const tdLabel = document.createElement("td");
+                tdLabel.textContent = i + 1;
+                tdLabel.style.fontWeight = "bold";
+                tr.appendChild(tdLabel);
+
+                currentPalette.forEach((cText, j) => {
+                    const td = document.createElement("td");
+                    const L1 = getLuminance(cBg) + 0.05;
+                    const L2 = getLuminance(cText) + 0.05;
+                    const ratio = Math.max(L1, L2) / Math.min(L1, L2);
+
+                    td.style.background = cBg;
+                    td.style.color = cText;
+                    td.style.textAlign = "center";
+                    td.style.padding = "4px 2px";
+                    td.title = `${i + 1} x ${j + 1}: ${ratio.toFixed(2)}`;
+
+                    let icon = "❌";
+                    if (ratio >= 7) icon = "🌟";
+                    else if (ratio >= 4.5) icon = "✅";
+                    else if (ratio >= 3) icon = "⚠️";
+
+                    td.innerHTML = `<strong>${ratio.toFixed(1)}</strong><br>${icon}`;
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+            grid.appendChild(table);
+        }
+
+        function sharePalette() {
+            const url = location.origin + location.pathname + "?data=" + btoa(JSON.stringify(currentPalette));
+            navigator.clipboard.writeText(url);
+            const toast = document.getElementById("toast");
+            toast.textContent = "共有URLをコピーしました！";
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 2000);
+        }
+
+        function exportPNG() {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = 1000; canvas.height = 400;
+            const cw = 1000 / currentPalette.length;
+            currentPalette.forEach((c, i) => {
+                ctx.fillStyle = c;
+                ctx.fillRect(i * cw, 0, cw, 400);
+                ctx.fillStyle = getTextColor(c);
+                ctx.font = "bold 32px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(c.toUpperCase(), i * cw + cw / 2, 350);
+            });
+            const link = document.createElement("a");
+            link.download = "palette.png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        }
+
+        function savePalette() {
+            const name = document.getElementById("paletteName").value.trim() || "無題";
+            const select = document.getElementById("savedPalettes");
+            let saved = JSON.parse(localStorage.getItem("palettes")) || [];
+            if (select.value !== "") saved[select.value] = { name, colors: currentPalette };
+            else saved.push({ name, colors: currentPalette });
+            localStorage.setItem("palettes", JSON.stringify(saved));
+            loadSavedList();
+        }
+
+        function loadSavedList() {
+            const select = document.getElementById("savedPalettes");
+            select.innerHTML = '<option value="">選択</option>';
+            (JSON.parse(localStorage.getItem("palettes")) || []).forEach((p, i) => {
+                const opt = document.createElement("option"); opt.value = i; opt.textContent = p.name;
+                select.appendChild(opt);
+            });
+        }
+
+        function loadSavedPalette() {
+            const idx = document.getElementById("savedPalettes").value;
+            if (idx === "") return;
+            const saved = JSON.parse(localStorage.getItem("palettes"))[idx];
+            currentPalette = saved.colors;
+            document.getElementById("colorCount").value = currentPalette.length;
+            document.getElementById("paletteName").value = saved.name;
+            renderPalette();
+        }
+
+        function deletePalette() {
+            const idx = document.getElementById("savedPalettes").value;
+            if (idx === "") return;
+            let saved = JSON.parse(localStorage.getItem("palettes"));
+            saved.splice(idx, 1);
+            localStorage.setItem("palettes", JSON.stringify(saved));
+            loadSavedList();
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle("dark");
+            html.classList.toggle("light", !isDark);
+            localStorage.setItem("theme", isDark ? "dark" : "light");
+        }
+
+        function setViewMode(mode) {
+            const body = document.body;
+            body.classList.remove("forced-pc", "forced-mobile");
+
+            const buttons = ["auto", "pc", "mobile"];
+            buttons.forEach(m => {
+                const btn = document.getElementById("btn-" + m);
+                if (btn) {
+                    btn.style.background = "transparent";
+                    btn.style.color = "inherit";
+                }
+            });
+
+            const activeBtn = document.getElementById("btn-" + mode);
+            if (activeBtn) {
+                activeBtn.style.background = "var(--primary)";
+                activeBtn.style.color = "#fff";
+            }
+
+            if (mode === "pc") body.classList.add("forced-pc");
+            if (mode === "mobile") body.classList.add("forced-mobile");
+
+            try {
+                localStorage.setItem("viewMode", mode);
+            } catch (e) { }
+
+            renderPalette();
+        }
+
+        function toggleHelp() {
+            const modal = document.getElementById("helpModal");
+            modal.style.display = modal.style.display === "block" ? "none" : "block";
+        }
+
+        function pickerUpdate(hex) {
+            if (selectedIndex === null) return;
+            currentPalette[selectedIndex] = hex.toUpperCase();
+            renderPalette();
+        }
+
+        window.onclick = function (event) {
+            const modal = document.getElementById("helpModal");
+            if (event.target == modal) modal.style.display = "none";
+        }
+
+        window.onload = () => {
+
+            const currentUser = requireAuth(); // auth.js
+            if (!currentUser) return;
+
+            injectCommonStyles(); // common.js
+            buildNav("index");    // common.js — ログアウトボタン含む
+
+            const saved = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+            document.documentElement.className = saved;
+            loadSavedList();
+            const params = new URLSearchParams(location.search);
+            if (params.get("data")) {
+                try {
+                    const decoded = JSON.parse(atob(params.get("data")));
+                    if (Array.isArray(decoded)) {
+                        currentPalette = decoded;
+                        const countEl = document.getElementById("colorCount");
+                        if (countEl) countEl.value = currentPalette.length;
+                    }
+                } catch (e) { console.error("URL Data Load Error:", e); }
+            }
+            if (currentPalette.length === 0) generatePalette();
+            else renderPalette();
+
+            const savedMode = localStorage.getItem("viewMode") || "auto";
+            setViewMode(savedMode);
+
+            animateSidebar();
+        };
+    </script>
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="toggleHelp()">&times;</span>
+            <h2 style="margin-top:0">⌨️ ショートカットとヘルプ</h2>
+            <ul style="list-style: none; padding: 0;">
+                <li style="margin-bottom: 10px;"><kbd>Space</kbd> - 新しいパレットを生成</li>
+                <li style="margin-bottom: 10px;"><kbd>Ctrl</kbd> + <kbd>Z</kbd> - 元に戻す (Undo)</li>
+                <li style="margin-bottom: 10px;"><kbd>Ctrl</kbd> + <kbd>Y</kbd> - やり直し (Redo)</li>
+                <li style="margin-bottom: 10px;"><kbd>Ctrl</kbd> + <kbd>S</kbd> - パレットを保存</li>
+            </ul>
+            <hr style="opacity: 0.1; margin: 20px 0;">
+            <h3>💡 ヒント</h3>
+            <ul style="font-size: 14px; opacity: 0.8;">
+                <li>カラーボックスをドラッグして順番を入れ替えられます。</li>
+                <li>色をロック(🔒)すると、ランダム生成時にその色が維持されます。</li>
+                <li>カラーボックスを2回クリックすると、直接色を選べます。</li>
+                <li>右側の「表示モード」でPC/スマホの見た目を切り替えられます。</li>
+            </ul>
+        </div>
+    </div>
+</body>
+
+</html>

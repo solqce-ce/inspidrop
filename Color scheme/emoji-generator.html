@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>絵文字ジェネレーター - Palette Generator Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ===== テーマ変数 ===== */
+    :root {
+      --primary: #007bff;
+      --primary-dim: rgba(0,123,255,0.12);
+      --primary-glow: rgba(0,123,255,0.35);
+      --lock-color: #f59e0b;
+      --lock-dim: rgba(245,158,11,0.15);
+      --shadow: 0 8px 32px rgba(31,38,135,0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ===== ライト / ダーク ===== */
+    html.light body {
+      background: #f0f4ff;
+      color: #1a1a2e;
+    }
+    html.dark body {
+      background: linear-gradient(160deg, #0d0d14 0%, #111118 100%);
+      color: #e8eaf0;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      padding: 24px 20px 80px;
+      min-height: 100vh;
+      transition: background 0.35s, color 0.35s;
+    }
+
+    .container { max-width: 920px; margin: 0 auto; }
+
+    /* ===== ページヘッダー ===== */
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      background: linear-gradient(45deg, #007bff, #00d4aa);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .page-header p { font-size: 13px; opacity: .55; margin-top: 5px; }
+
+    /* ===== カード ===== */
+    .card {
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 18px;
+      border: 1px solid;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.3s, background 0.35s;
+    }
+    html.light body .card {
+      background: rgba(255,255,255,0.95);
+      border-color: rgba(0,0,0,0.06);
+    }
+    html.dark body .card {
+      background: rgba(22,22,32,0.9);
+      border-color: rgba(255,255,255,0.07);
+    }
+    .card:hover { box-shadow: 0 14px 44px rgba(0,123,255,0.14); }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* ===== 統計バー ===== */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .stat-box {
+      background: var(--primary-dim);
+      border: 1px solid rgba(0,123,255,0.2);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-box .num {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .stat-box .lbl { font-size: 11px; opacity: .6; margin-top: 2px; }
+
+    /* ===== カテゴリチップ ===== */
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      opacity: .5;
+      margin-bottom: 10px;
+    }
+    .cat-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+
+    .cat-chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 2px solid rgba(0,123,255,0.3);
+      background: transparent;
+      color: inherit;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.18s;
+      /* labelタグではなくbuttonに変更したので内部inputは不要 */
+    }
+    .cat-chip.on {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 2px 8px var(--primary-glow);
+    }
+    .cat-chip:hover:not(.on) {
+      border-color: var(--primary);
+      background: var(--primary-dim);
+    }
+    /* 最後の1個を解除しようとしたとき視覚的にブロック */
+    .cat-chip.last-one { cursor: not-allowed; }
+
+    /* ===== コントロール行 ===== */
+    .controls-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .ctrl-block { display: flex; flex-direction: column; gap: 8px; }
+    .ctrl-label { font-size: 12px; font-weight: 600; opacity: .55; }
+
+    .count-select {
+      padding: 9px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(128,128,128,0.25);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      min-width: 90px;
+      transition: background 0.3s, color 0.3s, border-color 0.3s;
+    }
+    html.light body .count-select { background: #fff; color: #1a1a2e; border-color: #c8d0e0; }
+    html.dark  body .count-select { background: #1c1c2a; color: #e8eaf0; border-color: #3a3a50; }
+    .count-select:focus { outline: none; border-color: var(--primary); }
+
+    /* ロックトグルボタン */
+    .lock-global-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      border-radius: 10px;
+      border: 2px solid rgba(245,158,11,0.4);
+      background: transparent;
+      color: inherit;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .lock-global-btn.locked-mode {
+      background: var(--lock-dim);
+      border-color: var(--lock-color);
+      color: var(--lock-color);
+    }
+
+    /* ===== アクションボタン ===== */
+    .btn-row { display: flex; gap: 9px; flex-wrap: wrap; margin-bottom: 14px; }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .btn:hover  { transform: translateY(-2px); filter: brightness(1.08); }
+    .btn:active { transform: translateY(0); filter: brightness(.95); }
+    .btn-primary { background: var(--primary); color: #fff; flex: 1; min-width: 100px; justify-content: center; }
+    .btn-teal    { background: #0d9488; color: #fff; }
+    .btn-amber   { background: #f59e0b; color: #fff; }
+    .btn-slate   { background: #64748b; color: #fff; }
+
+    /* ===== ヒント ===== */
+    .hint-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      opacity: .55;
+      margin-bottom: 14px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: var(--primary-dim);
+    }
+
+    /* ===== 絵文字グリッド ===== */
+    .emoji-grid-display {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+      gap: 11px;
+      min-height: 100px;
+    }
+
+    .emoji-box {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 14px;
+      border: 2px solid rgba(0,123,255,0.2);
+      background: var(--primary-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      cursor: pointer;
+      transition: all 0.22s;
+      user-select: none;
+    }
+    .emoji-box:hover { transform: scale(1.07); border-color: var(--primary); }
+
+    /* 選択 */
+    .emoji-box.selected {
+      background: var(--primary);
+      border-color: var(--primary);
+      box-shadow: 0 0 20px var(--primary-glow);
+      transform: scale(1.09);
+    }
+    /* ロック */
+    .emoji-box.locked {
+      border-color: var(--lock-color);
+      background: var(--lock-dim);
+    }
+    .emoji-box.locked::after {
+      content: '🔒';
+      position: absolute;
+      top: 4px; right: 5px;
+      font-size: 13px;
+      line-height: 1;
+      pointer-events: none;
+    }
+    /* 選択 + ロック */
+    .emoji-box.selected.locked {
+      background: rgba(245,158,11,0.3);
+      border-color: var(--lock-color);
+      box-shadow: 0 0 20px rgba(245,158,11,0.4);
+    }
+
+    /* 空状態 */
+    .empty-grid {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 40px;
+      opacity: .35;
+      font-size: 15px;
+    }
+    .empty-grid .icon { font-size: 40px; margin-bottom: 10px; }
+
+    /* ===== 履歴 ===== */
+    .history-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      min-height: 36px;
+    }
+    .history-chip {
+      font-size: 24px;
+      padding: 5px 9px;
+      border-radius: 9px;
+      background: var(--primary-dim);
+      border: 1px solid rgba(0,123,255,0.18);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .history-chip:hover { transform: scale(1.18); background: rgba(0,123,255,0.22); }
+
+    /* ===== トースト ===== */
+    .toast {
+      position: fixed;
+      bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: rgba(10,10,18,0.9);
+      color: #fff;
+      padding: 11px 22px;
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s, transform 0.28s;
+      z-index: 2000;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ===== レスポンシブ ===== */
+    @media (max-width: 600px) {
+      .page-header h1 { font-size: 1.6rem; }
+      .controls-row { flex-direction: column; align-items: flex-start; }
+      .emoji-grid-display { grid-template-columns: repeat(auto-fill, minmax(72px,1fr)); }
+      .stats-row { grid-template-columns: repeat(3,1fr); }
+      .btn { font-size: 12px; padding: 9px 14px; }
+    }
+  </style>
+
+  <!-- テーマ即時適用 -->
+  <script>
+    (function(){
+      const t = localStorage.getItem('theme') ||
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.className = t;
+    })();
+  </script>
+</head>
+<body>
+
+<div id="mainNav"></div>
+<div id="toast" class="toast"></div>
+
+<div class="container">
+
+  <!-- ヘッダー -->
+  <div class="page-header">
+    <h1>😊 絵文字ジェネレーター</h1>
+    <p>カテゴリを選んでランダム生成 / クリックで選択 / 右クリック（長押し）でロック</p>
+  </div>
+
+  <!-- 統計 -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="num" id="statTotal">0</div>
+      <div class="lbl">総生成数</div>
+    </div>
+    <div class="stat-box">
+      <div class="num" id="statLocked">0</div>
+      <div class="lbl">ロック中</div>
+    </div>
+    <div class="stat-box">
+      <div class="num" id="statHistory">0</div>
+      <div class="lbl">履歴数</div>
+    </div>
+  </div>
+
+  <!-- メインカード -->
+  <div class="card">
+    <div class="card-title">🎲 絵文字ランダム生成</div>
+
+    <!-- カテゴリ -->
+    <div class="section-label">カテゴリ（複数選択可・最低1つ）</div>
+    <div class="cat-wrap" id="catWrap">
+      <button class="cat-chip on" data-cat="smileys">😀 顔・笑顔</button>
+      <button class="cat-chip"   data-cat="animals">🐱 動物・自然</button>
+      <button class="cat-chip"   data-cat="food">🍕 食べ物</button>
+      <button class="cat-chip"   data-cat="travel">✈️ 旅行</button>
+      <button class="cat-chip"   data-cat="activities">⚽ 活動</button>
+      <button class="cat-chip"   data-cat="objects">💻 物</button>
+      <button class="cat-chip"   data-cat="hearts">❤️ ハート</button>
+      <button class="cat-chip"   data-cat="symbols">⭐ 記号</button>
+    </div>
+
+    <!-- コントロール -->
+    <div class="controls-row">
+      <div class="ctrl-block">
+        <span class="ctrl-label">生成数</span>
+        <select class="count-select" id="countSelect">
+          <option value="1">1個</option>
+          <option value="2">2個</option>
+          <option value="3">3個</option>
+          <option value="4">4個</option>
+          <option value="5">5個</option>
+          <option value="6" selected>6個</option>
+          <option value="8">8個</option>
+          <option value="10">10個</option>
+        </select>
+      </div>
+      <div class="ctrl-block">
+        <span class="ctrl-label">ロック設定</span>
+        <button class="lock-global-btn" id="lockGlobalBtn" onclick="toggleAllLock()">
+          🔓 全ロック解除中
+        </button>
+      </div>
+    </div>
+
+    <!-- アクションボタン -->
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="generateEmojis()">🎲 生成</button>
+      <button class="btn btn-teal"    onclick="copySelected()">📋 コピー</button>
+      <button class="btn btn-amber"   onclick="unlockAll()">🔓 全解除</button>
+      <button class="btn btn-slate"   onclick="resetSelection()">↺ 選択リセット</button>
+    </div>
+
+    <!-- ヒント -->
+    <div class="hint-bar">
+      💡 <span>クリック → 選択切替 ／ 右クリック・長押し → 🔒ロック（次回生成でも保持）</span>
+    </div>
+
+    <!-- 絵文字表示 -->
+    <div class="emoji-grid-display" id="emojiDisplay">
+      <div class="empty-grid">
+        <div class="icon">🎲</div>
+        <div>「生成」ボタンを押してください</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 履歴カード -->
+  <div class="card">
+    <div class="card-title">📝 最近生成した絵文字</div>
+    <div class="history-wrap" id="historyWrap">
+      <span style="opacity:.4;font-size:13px;">まだ履歴がありません</span>
+    </div>
+  </div>
+
+  <!-- 他ページリンク -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <a href="pose-generator.html"  style="display:inline-flex;align-items:center;gap:6px;padding:11px 20px;border-radius:10px;background:#7c3aed;color:#fff;text-decoration:none;font-weight:700;font-size:13px;transition:all .2s;" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">🧍 ポーズ・構図 →</a>
+    <a href="chara-generator.html" style="display:inline-flex;align-items:center;gap:6px;padding:11px 20px;border-radius:10px;background:#10b981;color:#fff;text-decoration:none;font-weight:700;font-size:13px;transition:all .2s;" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">👥 キャラ構成 →</a>
+  </div>
+
+</div><!-- /container -->
+
+<script src="auth.js"></script>
+<script src="common.js"></script>
+<script>
+// ========== 絵文字データベース ==========
+const emojiDB = {
+  smileys:    ['😀','😃','😄','😁','😆','😅','🤣','😂','😇','🙂','😉','😌','😍','🥰','😘','😋','😛','😜','🤪','🤑','🤗','🤔','😐','😏','😒','🙄','😬','😔','😴','😷','🤒','🥴','😵','🤯','🤠','🥳','😎','🤓','😕','😮','😲','😳','🥺','😢','😭','😱','😤','😡','😠','🤬','😈','💀','🤡','👻','👽','🤖','😺','😸','😻','😼'],
+  animals:    ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦆','🦅','🦉','🐺','🐴','🦄','🦋','🐌','🐞','🐢','🐍','🦎','🐙','🐬','🐳','🦈','🐘','🦒','🦌','🐕','🐈','🦚','🦜','🌿','🌸','🌺','🌻','🌷','🍀','🌈','🌊','🌋'],
+  food:       ['🍏','🍎','🍊','🍋','🍌','🍉','🍇','🍓','🍒','🍑','🥭','🍍','🥑','🥕','🌽','🥒','🍅','🥐','🍞','🥚','🍳','🥞','🍔','🍟','🍕','🌮','🌯','🍣','🍱','🍜','🍝','🍲','🍦','🍰','🎂','🧁','🍩','🍪','🍫','🍿','☕','🍵','🧃','🍺','🍷','🍸','🧋'],
+  travel:     ['✈️','🚀','🛸','🚁','🚂','🚄','🚇','🚌','🚗','🚕','🛵','⛵','🚤','🛳️','🗼','🗽','🏰','🎡','⛰️','🏔️','🌋','🏖️','🏝️','🏜️','🏕️','🌃','🌆','🌇','🌉'],
+  activities: ['⚽','🏀','🏈','⚾','🎾','🏐','🎳','🏓','🥊','⛳','🎣','🎿','🎯','🎮','🎭','🎨','🎬','🎤','🎧','🎸','🥁','🎺','🎷','🎻','🎲','♟️','🏆','🥇','🏋️','🤸','🧘','🚴'],
+  objects:    ['💼','⌚','📱','💻','🖥️','🕹️','💾','📷','📺','📻','⏰','🔋','💡','🔦','💸','✉️','📦','🔑','🔒','🔓','🧲','🔬','🔭','📚','📖','📝','✏️','📌','✂️','🧰','⚙️','🔧','🔨'],
+  hearts:     ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','💕','💞','💓','💗','💖','💘','💝','💟','❣️','♥️'],
+  symbols:    ['⭐','🌟','✨','💫','⚡','🔥','🌊','💥','❄️','🌈','☀️','🌙','🔵','🟢','🟡','🟠','🔴','🟣','♠️','♥️','♦️','♣️','✅','❌','⚠️','💯','🏁'],
+};
+
+// ========== 状態 ==========
+let currentEmojis   = []; // [{ emoji, locked }]
+let generationHistory = [];
+let allLockedMode   = false; // ロックボタンの一括表示用（UIのみ）
+
+// ========== カテゴリチップ ==========
+function initCatChips() {
+  const chips = document.querySelectorAll('#catWrap .cat-chip');
+
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      const isOn = chip.classList.contains('on');
+      const onCount = document.querySelectorAll('#catWrap .cat-chip.on').length;
+
+      // 最後の1個をオフにしようとしたらブロック
+      if (isOn && onCount === 1) {
+        chip.classList.add('last-one');
+        showToast('⚠️ 最低1つのカテゴリを選んでください');
+        setTimeout(() => chip.classList.remove('last-one'), 800);
+        return;
+      }
+      chip.classList.toggle('on', !isOn);
+    });
+  });
+}
+
+// ========== 絵文字生成 ==========
+function generateEmojis() {
+  const count = parseInt(document.getElementById('countSelect').value);
+  const selectedCats = [...document.querySelectorAll('#catWrap .cat-chip.on')]
+    .map(c => c.dataset.cat);
+
+  // プール構築
+  let pool = [];
+  selectedCats.forEach(c => { pool = pool.concat(emojiDB[c]); });
+  pool = [...new Set(pool)];
+
+  // ロック済みを保持
+  const locked = currentEmojis.filter(e => e.locked);
+  const needCount = Math.max(0, count - locked.length);
+
+  // 新規生成
+  const newEmojis = [];
+  for (let i = 0; i < needCount; i++) {
+    newEmojis.push({ emoji: pool[Math.floor(Math.random() * pool.length)], locked: false });
+  }
+
+  currentEmojis = [...locked, ...newEmojis].slice(0, count);
+  renderEmojiDisplay();
+
+  // 履歴追加（ユニーク）
+  newEmojis.forEach(e => {
+    if (!generationHistory.includes(e.emoji)) generationHistory.unshift(e.emoji);
+  });
+  if (generationHistory.length > 60) generationHistory.length = 60;
+  localStorage.setItem('emojiHistory', JSON.stringify(generationHistory));
+  renderHistory();
+  updateStats();
+
+  const lMsg = locked.length > 0 ? `（🔒${locked.length}個保持）` : '';
+  showToast(`${count}個生成しました！${lMsg}`);
+}
+
+// ========== 描画 ==========
+function renderEmojiDisplay() {
+  const display = document.getElementById('emojiDisplay');
+  display.innerHTML = '';
+
+  if (currentEmojis.length === 0) {
+    display.innerHTML = '<div class="empty-grid"><div class="icon">🎲</div><div>「生成」ボタンを押してください</div></div>';
+    return;
+  }
+
+  currentEmojis.forEach((item, i) => {
+    const box = document.createElement('div');
+    box.className = 'emoji-box' +
+      (item.locked   ? ' locked'   : '') +
+      (item.selected ? ' selected' : '');
+    box.textContent = item.emoji;
+    box.title = item.locked
+      ? '🔒 ロック中（右クリックで解除）'
+      : 'クリック: 選択 ／ 右クリック・長押し: ロック';
+
+    // クリック → 選択トグル
+    box.addEventListener('click', () => {
+      item.selected = !item.selected;
+      box.classList.toggle('selected', item.selected);
+    });
+
+    // 右クリック → ロックトグル
+    box.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      item.locked = !item.locked;
+      box.classList.toggle('locked', item.locked);
+      box.title = item.locked
+        ? '🔒 ロック中（右クリックで解除）'
+        : 'クリック: 選択 ／ 右クリック・長押し: ロック';
+      updateStats();
+      showToast(item.locked ? `🔒 ${item.emoji} をロック` : `🔓 ロック解除`);
+    });
+
+    // 長押し → ロックトグル（タッチ対応）
+    let timer;
+    box.addEventListener('touchstart', () => {
+      timer = setTimeout(() => {
+        item.locked = !item.locked;
+        box.classList.toggle('locked', item.locked);
+        updateStats();
+        showToast(item.locked ? `🔒 ロックしました` : `🔓 解除しました`);
+      }, 500);
+    }, { passive: true });
+    box.addEventListener('touchend', () => clearTimeout(timer), { passive: true });
+    box.addEventListener('touchmove', () => clearTimeout(timer), { passive: true });
+
+    display.appendChild(box);
+  });
+}
+
+// ========== 一括ロック ==========
+function toggleAllLock() {
+  if (currentEmojis.length === 0) { showToast('先に絵文字を生成してください'); return; }
+  allLockedMode = !allLockedMode;
+  currentEmojis.forEach(e => { e.locked = allLockedMode; });
+  const btn = document.getElementById('lockGlobalBtn');
+  btn.textContent = allLockedMode ? '🔒 全ロック中' : '🔓 全ロック解除中';
+  btn.classList.toggle('locked-mode', allLockedMode);
+  renderEmojiDisplay();
+  updateStats();
+  showToast(allLockedMode ? '🔒 全部ロックしました' : '🔓 全ロック解除しました');
+}
+
+function unlockAll() {
+  currentEmojis.forEach(e => { e.locked = false; });
+  allLockedMode = false;
+  const btn = document.getElementById('lockGlobalBtn');
+  btn.textContent = '🔓 全ロック解除中';
+  btn.classList.remove('locked-mode');
+  renderEmojiDisplay();
+  updateStats();
+  showToast('🔓 全ロックを解除しました');
+}
+
+// ========== 選択リセット ==========
+function resetSelection() {
+  currentEmojis.forEach(e => { e.selected = false; });
+  document.querySelectorAll('.emoji-box').forEach(b => b.classList.remove('selected'));
+  showToast('選択をリセットしました');
+}
+
+// ========== コピー ==========
+function copySelected() {
+  const selectedItems = currentEmojis.filter(e => e.selected);
+  if (selectedItems.length === 0) {
+    const all = currentEmojis.map(e => e.emoji).join('');
+    if (!all) { showToast('先に絵文字を生成してください'); return; }
+    navigator.clipboard.writeText(all);
+    showToast('全絵文字をコピーしました！');
+  } else {
+    navigator.clipboard.writeText(selectedItems.map(e => e.emoji).join(''));
+    showToast(`${selectedItems.length}個をコピーしました！`);
+  }
+}
+
+// ========== 履歴 ==========
+function renderHistory() {
+  const wrap = document.getElementById('historyWrap');
+  if (generationHistory.length === 0) {
+    wrap.innerHTML = '<span style="opacity:.4;font-size:13px;">まだ履歴がありません</span>';
+    return;
+  }
+  wrap.innerHTML = generationHistory.slice(0, 40).map(e => {
+    const safe = e.replace(/'/g, '&#39;');
+    return `<span class="history-chip" title="${safe}をコピー"
+      onclick="navigator.clipboard.writeText('${safe}');showToast('${safe} をコピー！')">${e}</span>`;
+  }).join('');
+}
+
+// ========== 統計 ==========
+function updateStats() {
+  document.getElementById('statTotal').textContent   = generationHistory.length;
+  document.getElementById('statLocked').textContent  = currentEmojis.filter(e => e.locked).length;
+  document.getElementById('statHistory').textContent = generationHistory.length;
+}
+
+// ========== トースト ==========
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2300);
+}
+
+// ========== 初期化 ==========
+window.onload = () => {
+  const user = requireAuth();
+  if (!user) return;
+  injectCommonStyles();
+  buildNav('emoji');
+
+  initCatChips();
+
+  generationHistory = JSON.parse(localStorage.getItem('emojiHistory') || '[]');
+  renderHistory();
+  updateStats();
+};
+</script>
+</body>
+</html>

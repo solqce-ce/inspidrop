@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>設定 - Palette Generator Pro</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --glass-bg-light: rgba(255, 255, 255, 0.7);
+            --glass-bg-dark: rgba(30, 30, 30, 0.7);
+            --border-light: rgba(255, 255, 255, 0.2);
+            --border-dark: rgba(255, 255, 255, 0.1);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            padding: 20px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            line-height: 1.6;
+        }
+
+        html.light body {
+            background: #ffffff;
+            color: #222;
+        }
+
+        html.dark body {
+            background: linear-gradient(180deg, #0c0c0c 0%, #151515 100%);
+            color: #eaeaea;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #007bff, #00ff88);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-buttons button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .nav-buttons button:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .settings-card {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+
+        html.light body .settings-card {
+            background: var(--glass-bg-light);
+            border-color: var(--border-light);
+        }
+
+        html.dark body .settings-card {
+            background: var(--glass-bg-dark);
+            border-color: var(--border-dark);
+        }
+
+        .settings-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.25);
+        }
+
+        .settings-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .setting-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        html.dark body .setting-item {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .setting-item label {
+            font-weight: 500;
+        }
+
+        .setting-item input[type="checkbox"],
+        .setting-item input[type="radio"],
+        .setting-item select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(128, 128, 128, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: inherit;
+            transition: all 0.2s;
+        }
+
+        html.dark body .setting-item select {
+            background: #1e293b;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+
+        html.light body .setting-item select {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
+
+        /* Select のオプション（ドロップダウン内） */
+        .setting-item select option {
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+
+        html.light body .setting-item select option {
+            background: #ffffff;
+            color: #1e293b;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--primary);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        .settings-section {
+            margin-bottom: 20px;
+        }
+
+        .settings-section h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            opacity: 0.8;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        button.btn-primary {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        button.btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        button.btn-danger {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            background: #dc3545;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        button.btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+            z-index: 2000;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.show {
+            opacity: 1;
+            bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .setting-item {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-buttons {
+                justify-content: center;
+            }
+        }
+
+        /* ナビゲーションボタン */
+
+        /* PC用：テキスト表示 */
+        .nav-buttons-container a .pc-text {
+            display: inline;
+        }
+
+        .nav-buttons-container a .mobile-text {
+            display: none;
+        }
+
+        /* スマホ用：絵文字のみ表示 */
+        @media (max-width: 768px) {
+            .nav-buttons-container a .pc-text {
+                display: none;
+            }
+
+            .nav-buttons-container a .mobile-text {
+                display: inline;
+            }
+
+            .nav-buttons-container a {
+                padding: 8px 12px;
+                font-size: 16px;
+            }
+        }
+    </style>
+
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem("theme");
+
+            if (savedTheme) {
+                document.documentElement.classList.add(savedTheme);
+            } else {
+                if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+                    document.documentElement.classList.add("dark");
+                } else {
+                    document.documentElement.classList.add("light");
+                }
+            }
+        })();
+    </script>
+
+</head>
+
+<body class="dark">
+    <!-- 共通ナビゲーション -->
+    <div id="mainNav"></div>
+
+    <!-- 以下、既存のコード -->
+    <div id="toast" class="toast"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ 設定</h1>
+            <div class="nav-buttons">
+                <button onclick="goToHome()">← 戻る</button>
+            </div>
+        </div>
+
+        <div class="settings-grid">
+
+            <!-- ���ーマ設定 -->
+            <div class="settings-card">
+                <h2>🌓 テーマ設定</h2>
+                <div class="settings-section">
+                    <h3>外観</h3>
+                    <div class="setting-item">
+                        <label for="themeMode">テーマモード:</label>
+                        <div class="toggle-switch">
+                            <label class="switch">
+                                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+                                <span class="slider"></span>
+                            </label>
+                            <span id="themeLabel">ダークモード</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label for="autoTheme">システム設定に従う:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="autoTheme" onchange="toggleAutoTheme()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表示設定 -->
+            <div class="settings-card">
+                <h2>📱 表示設定</h2>
+                <div class="settings-section">
+                    <h3>レイアウト</h3>
+                    <div class="setting-item">
+                        <label>デフォルトビューモード:</label>
+                        <select id="defaultViewMode" onchange="saveSettings()">
+                            <option value="auto">自動</option>
+                            <option value="pc">PC</option>
+                            <option value="mobile">スマホ</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>コンテンツ</h3>
+                    <div class="setting-item">
+                        <label>サイドバーを常に表示:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="alwaysShowSidebar" onchange="saveSettings()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>アニメーション有効:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="enableAnimations" checked onchange="saveSettings()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 色の設定 -->
+            <div class="settings-card">
+                <h2>🎨 色の設定</h2>
+                <div class="settings-section">
+                    <h3>デフォルトフォーマット</h3>
+                    <div class="setting-item">
+                        <label>コピー時の形式:</label>
+                        <select id="defaultColorFormat" onchange="saveSettings()">
+                            <option value="hex">HEX (#FFFFFF)</option>
+                            <option value="rgb">RGB (255, 255, 255)</option>
+                            <option value="hsl">HSL (0, 0%, 100%)</option>
+                            <option value="cmyk">CMYK (0%, 0%, 0%, 0%)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>色数設定</h3>
+                    <div class="setting-item">
+                        <label for="defaultColorCount">デフォルト色数:</label>
+                        <select id="defaultColorCount" onchange="saveSettings()">
+                            <option value="2">2色</option>
+                            <option value="3">3色</option>
+                            <option value="4">4色</option>
+                            <option value="5" selected>5色</option>
+                            <option value="6">6色</option>
+                            <option value="7">7色</option>
+                            <option value="8">8色</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- アクセシビリティ設定 -->
+            <div class="settings-card">
+                <h2>♿ アクセシビリティ</h2>
+                <div class="settings-section">
+                    <h3>視覚支援</h3>
+                    <div class="setting-item">
+                        <label>高コントラストモード:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="highContrast" onchange="saveSettings()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>大きいテキスト:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="largeText" onchange="saveSettings()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>カラーシミュレーション</h3>
+                    <div class="setting-item">
+                        <label>色覚シミュレーションをデフォルト表示:</label>
+                        <select id="defaultSimulation" onchange="saveSettings()">
+                            <option value="none" selected>なし</option>
+                            <option value="protanopia">1型2色覚 (赤微弱)</option>
+                            <option value="deuteranopia">2型2色覚 (緑微弱)</option>
+                            <option value="tritanopia">3型2色覚 (青微弱)</option>
+                            <option value="grayscale">モノクロ</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- キーボードショートカット -->
+            <div class="settings-card">
+                <h2>⌨️ キーボードショートカット</h2>
+                <div class="settings-section">
+                    <h3>現在のショートカット</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+                                <strong>Space</strong>
+                            </td>
+                            <td style="padding: 10px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+                                新しいパレットを生成
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+                                <strong>Ctrl + Z</strong>
+                            </td>
+                            <td style="padding: 10px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+                                元に戻す (Undo)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+                                <strong>Ctrl + Y</strong>
+                            </td>
+                            <td style="padding: 10px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+                                やり直し (Redo)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+                                <strong>Ctrl + S</strong>
+                            </td>
+                            <td style="padding: 10px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+                                パレットを保存
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- データ管理 -->
+            <div class="settings-card">
+                <h2>💾 データ管理</h2>
+                <div class="settings-section">
+                    <h3>バックアップと復元</h3>
+                    <p style="margin-bottom: 15px; opacity: 0.8;">保存したパレットと設定をエクスポート・インポートできます。</p>
+                    <div class="button-group">
+                        <button class="btn-primary" onclick="exportData()">📥 データをエクスポート</button>
+                        <button class="btn-primary" onclick="importData()">📤 データをインポート</button>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>キャッシュクリア</h3>
+                    <p style="margin-bottom: 15px; opacity: 0.8;">ブラウザのキャッシュとローカルストレージをクリアします。</p>
+                    <button class="btn-danger" onclick="clearCache()">🗑️ キャッシュをクリア</button>
+                </div>
+                <div class="settings-section">
+                    <h3>リセット</h3>
+                    <p style="margin-bottom: 15px; opacity: 0.8; color: #ff6b6b;">⚠️ すべての設定とデータが削除されます。この操作は元に戻せません。</p>
+                    <button class="btn-danger" onclick="resetAll()">⚡ すべてリセット</button>
+                </div>
+            </div>
+
+            <!-- 情報 -->
+            <div class="settings-card">
+                <h2>ℹ️ 情報</h2>
+                <div class="settings-section">
+                    <h3>バージョン情報</h3>
+                    <div class="setting-item">
+                        <label>Palette Generator Pro:</label>
+                        <span id="versionInfo">v1.0.0</span>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>サポート</h3>
+                    <p style="margin-bottom: 10px;">ご質問やバグ報告は以下までお願いします：</p>
+                    <button class="btn-primary" onclick="openSupport()">📧 お問い合わせ</button>
+                </div>
+            </div>
+
+        </div>
+        <!-- ログアウト -->
+        <div class="settings-card">
+            <h2>🚪 アカウント</h2>
+            <div class="settings-section">
+                <div id="userInfo"
+                    style="margin-bottom: 20px; padding: 15px; background: rgba(0,123,255,0.1); border-radius: 8px;">
+                    <!-- ユーザー情報が表示される -->
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-primary" onclick="goToProfile()" style="flex: 1;">👤 プロフィール編集</button>
+                    <button class="btn-danger" onclick="logout()" style="flex: 1;">🚪 ログアウト</button>
+                </div>
+            </div>
+        </div>
+
+        <input type="file" id="importInput" style="display: none;" accept=".json" onchange="handleImport(event)">
+
+        <script src="auth.js"></script>
+        <script src="common.js"></script>
+        <script>
+            // 設定を読み込む
+            function loadSettings() {
+                const settings = JSON.parse(localStorage.getItem("settings")) || getDefaultSettings();
+
+                // テーマ
+                const isDark = localStorage.getItem("theme") === "dark";
+                document.getElementById("darkModeToggle").checked = isDark;
+                document.getElementById("themeLabel").textContent = isDark ? "ダークモード" : "ライトモード";
+
+                // 表示設定
+                document.getElementById("defaultViewMode").value = settings.viewMode || "auto";
+                document.getElementById("alwaysShowSidebar").checked = settings.alwaysShowSidebar || false;
+                document.getElementById("enableAnimations").checked = settings.enableAnimations !== false;
+
+                // 色の設定
+                document.getElementById("defaultColorFormat").value = settings.colorFormat || "hex";
+                document.getElementById("defaultColorCount").value = settings.colorCount || "5";
+
+                // アクセシビリティ
+                document.getElementById("highContrast").checked = settings.highContrast || false;
+                document.getElementById("largeText").checked = settings.largeText || false;
+                document.getElementById("defaultSimulation").value = settings.simulation || "none";
+            }
+
+            function getDefaultSettings() {
+                return {
+                    viewMode: "auto",
+                    alwaysShowSidebar: false,
+                    enableAnimations: true,
+                    colorFormat: "hex",
+                    colorCount: "5",
+                    highContrast: false,
+                    largeText: false,
+                    simulation: "none"
+                };
+            }
+
+            // 設定を保存
+            function saveSettings() {
+                const settings = {
+                    viewMode: document.getElementById("defaultViewMode").value,
+                    alwaysShowSidebar: document.getElementById("alwaysShowSidebar").checked,
+                    enableAnimations: document.getElementById("enableAnimations").checked,
+                    colorFormat: document.getElementById("defaultColorFormat").value,
+                    colorCount: document.getElementById("defaultColorCount").value,
+                    highContrast: document.getElementById("highContrast").checked,
+                    largeText: document.getElementById("largeText").checked,
+                    simulation: document.getElementById("defaultSimulation").value
+                };
+
+                localStorage.setItem("settings", JSON.stringify(settings));
+                showToast("設定を保存しました！");
+            }
+
+            // テーマ切り替え
+            function toggleDarkMode() {
+                const isDark = document.getElementById("darkModeToggle").checked;
+                document.documentElement.className = isDark ? "dark" : "light";
+                localStorage.setItem("theme", isDark ? "dark" : "light");
+                document.getElementById("themeLabel").textContent = isDark ? "ダークモード" : "ライトモード";
+                saveSettings();
+            }
+
+            function toggleAutoTheme() {
+                // 実装例
+                const autoTheme = document.getElementById("autoTheme").checked;
+                if (autoTheme) {
+                    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+                    document.documentElement.className = isDark ? "dark" : "light";
+                    localStorage.setItem("theme", isDark ? "dark" : "light");
+                }
+                saveSettings();
+            }
+
+            // データエクスポート
+            function exportData() {
+                const data = {
+                    palettes: localStorage.getItem("palettes"),
+                    settings: localStorage.getItem("settings"),
+                    theme: localStorage.getItem("theme"),
+                    exportDate: new Date().toISOString()
+                };
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `palette-generator-backup-${new Date().getTime()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast("データをエクスポートしました！");
+            }
+
+            // データインポート
+            function importData() {
+                document.getElementById("importInput").click();
+            }
+
+            function handleImport(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+
+                        if (data.palettes) localStorage.setItem("palettes", data.palettes);
+                        if (data.settings) localStorage.setItem("settings", data.settings);
+                        if (data.theme) localStorage.setItem("theme", data.theme);
+
+                        loadSettings();
+                        showToast("データをインポートしました！");
+                    } catch (err) {
+                        showToast("エラー: ファイルが正しくありません");
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // キャッシュクリア
+            function clearCache() {
+                if (confirm("ブラウザキャッシュをクリアしてもよろしいですか？")) {
+                    // ローカルストレージをクリア
+                    const palettes = localStorage.getItem("palettes");
+                    const settings = localStorage.getItem("settings");
+                    const theme = localStorage.getItem("theme");
+
+                    localStorage.clear();
+
+                    // 重要な設定は保持
+                    if (palettes) localStorage.setItem("palettes", palettes);
+                    if (settings) localStorage.setItem("settings", settings);
+                    if (theme) localStorage.setItem("theme", theme);
+
+                    showToast("キャッシュをクリアしました！");
+                }
+            }
+
+            // すべてリセット
+            function resetAll() {
+                if (confirm("⚠️ すべての設定とデータが削除されます。本当によろしいですか？")) {
+                    if (confirm("本当に削除しますか？この操作は元に戻せません。")) {
+                        localStorage.clear();
+                        location.reload();
+                    }
+                }
+            }
+
+            // トースト表示
+        // showToast は common.js を使用
+
+            // ナビゲーション
+            function goToHome() {
+                window.location.href = "index.html";
+            }
+
+            function openSupport() {
+                window.open("mailto:support@example.com?subject=Palette%20Generator%20Pro%20-%20お問い合わせ");
+            }
+
+            // 初期化
+            // ユーザー情報を表示
+            function displayUserInfo() {
+                const currentUser = getCurrentUser(); // auth.js
+                if (currentUser) {
+                    const userInfo = document.getElementById("userInfo");
+                    userInfo.innerHTML = `
+                    <strong>👤 ユーザー名:</strong> ${currentUser.name}<br>
+                    <small>ログイン: ${new Date(currentUser.loginTime).toLocaleString('ja-JP')}</small>
+                `;
+                }
+            }
+
+            window.onload = () => {
+                const saved = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+                document.documentElement.className = saved;
+                loadSettings();
+                displayUserInfo();
+            };
+
+            // プロフィール編集ページへ
+            function goToProfile() {
+                window.location.href = "profile.html";
+            }
+
+        </script>
+</body>
+
+</html>

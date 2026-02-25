@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新規登録 - Palette Generator Pro</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .register-container {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 450px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 6px;
+      font-size: 26px;
+      background: linear-gradient(45deg, #007bff, #00ff88);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 28px;
+      font-size: 14px;
+    }
+
+    .form-group { margin-bottom: 18px; }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 44px 12px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+    input.valid   { border-color: #28a745; }
+    input.invalid { border-color: #dc3545; }
+    input:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0;
+      line-height: 1;
+      color: #999;
+      transition: color 0.2s;
+    }
+    .toggle-password:hover { color: #333; }
+
+    .hint {
+      font-size: 12px;
+      color: #999;
+      margin-top: 5px;
+    }
+
+    /* リアルタイム要件チェック */
+    .requirements {
+      background: #f8f9fa;
+      border: 1px solid #eee;
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .requirements h4 {
+      margin-bottom: 10px;
+      color: #444;
+      font-size: 13px;
+    }
+    .req-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: #888;
+      transition: color 0.2s;
+    }
+    .req-item.met { color: #28a745; }
+    .req-icon { font-size: 14px; width: 16px; text-align: center; }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 26px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-register { background: #28a745; color: white; }
+    .btn-register:hover { background: #218838; transform: translateY(-2px); }
+    .btn-register:disabled { background: #aaa; cursor: not-allowed; transform: none; }
+    .btn-back { background: #6c757d; color: white; }
+    .btn-back:hover { background: #5a6268; transform: translateY(-2px); }
+
+    .alert {
+      font-size: 14px;
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      display: none;
+    }
+    .alert-error  { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .alert-success{ background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+
+    .login-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #666;
+    }
+    .login-link a { color: #007bff; text-decoration: none; font-weight: 600; }
+    .login-link a:hover { text-decoration: underline; }
+
+    @media (max-width: 480px) {
+      .register-container { padding: 28px 20px; }
+      h1 { font-size: 22px; }
+      .button-group { flex-direction: column; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="register-container">
+    <h1>🎨 Palette Generator Pro</h1>
+    <p class="subtitle">アカウント新規登録</p>
+
+    <form id="registerForm" onsubmit="handleRegister(event)" novalidate>
+
+      <!-- リアルタイム要件表示 -->
+      <div class="requirements">
+        <h4>📋 入力要件</h4>
+        <div class="req-item" id="req-displayName">
+          <span class="req-icon">❌</span> 表示名を入力する
+        </div>
+        <div class="req-item" id="req-username">
+          <span class="req-icon">❌</span> ユーザー名は3文字以上（英数字・_）
+        </div>
+        <div class="req-item" id="req-password">
+          <span class="req-icon">❌</span> パスワードは8文字以上
+        </div>
+        <div class="req-item" id="req-match">
+          <span class="req-icon">❌</span> パスワードが一致する
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="displayName">表示名</label>
+        <input type="text" id="displayName" placeholder="山田太郎" oninput="validateForm()" autocomplete="name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="username">ユーザー名</label>
+        <input type="text" id="username" placeholder="yamada123" oninput="validateForm()" autocomplete="username" required>
+        <p class="hint">英数字とアンダースコアのみ、3文字以上</p>
+      </div>
+
+      <div class="form-group">
+        <label for="password">パスワード</label>
+        <div class="input-wrapper">
+          <input type="password" id="password" placeholder="8文字以上" oninput="validateForm()" autocomplete="new-password" required>
+          <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password', this)" aria-label="パスワードを表示">👁️</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">パスワード確認</label>
+        <div class="input-wrapper">
+          <input type="password" id="confirmPassword" placeholder="パスワードを再入力" oninput="validateForm()" autocomplete="new-password" required>
+          <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword', this)" aria-label="パスワードを表示">👁️</button>
+        </div>
+      </div>
+
+      <div class="alert alert-error"  id="errorMsg"></div>
+      <div class="alert alert-success" id="successMsg"></div>
+
+      <div class="button-group">
+        <button type="submit" class="btn-register" id="submitBtn" disabled>登録する</button>
+        <button type="button" class="btn-back" onclick="window.location.href='login.html'">戻る</button>
+      </div>
+    </form>
+
+    <div class="login-link">
+      既にアカウントをお持ちですか？ <a href="login.html">ログイン</a>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    // ========== パスワード表示トグル ==========
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      btn.textContent = isHidden ? "🙈" : "👁️";
+    }
+
+    // ========== リアルタイムバリデーション ==========
+    function validateForm() {
+      const displayName     = document.getElementById("displayName").value.trim();
+      const username        = document.getElementById("username").value.trim();
+      const password        = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+
+      const checks = {
+        displayName: displayName.length >= 1,
+        username:    username.length >= 3 && /^[a-zA-Z0-9_]+$/.test(username),
+        password:    password.length >= 8,
+        match:       password.length > 0 && password === confirmPassword
+      };
+
+      // 要件表示を更新
+      for (const [key, met] of Object.entries(checks)) {
+        const el = document.getElementById(`req-${key}`);
+        el.classList.toggle("met", met);
+        el.querySelector(".req-icon").textContent = met ? "✅" : "❌";
+      }
+
+      // 入力フィールドの色分け
+      setInputState("displayName", checks.displayName);
+      setInputState("username",    checks.username,    username.length > 0);
+      setInputState("password",    checks.password,    password.length > 0);
+      setInputState("confirmPassword", checks.match,   confirmPassword.length > 0);
+
+      const allValid = Object.values(checks).every(Boolean);
+      document.getElementById("submitBtn").disabled = !allValid;
+    }
+
+    function setInputState(id, isValid, hasInput = true) {
+      const input = document.getElementById(id);
+      input.classList.remove("valid", "invalid");
+      if (!hasInput) return;
+      input.classList.add(isValid ? "valid" : "invalid");
+    }
+
+    // ========== 登録処理 ==========
+    async function handleRegister(event) {
+      event.preventDefault();
+      const displayName = document.getElementById("displayName").value.trim();
+      const username    = document.getElementById("username").value.trim();
+      const password    = document.getElementById("password").value;
+      const submitBtn   = document.getElementById("submitBtn");
+      const errorMsg    = document.getElementById("errorMsg");
+      const successMsg  = document.getElementById("successMsg");
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "登録中...";
+
+      try {
+        const result = await registerUser(displayName, username, password);
+
+        if (result.success) {
+          errorMsg.style.display = "none";
+          successMsg.textContent = `✅ 登録成功！${displayName}さん、ようこそ！ログインページへ移動します...`;
+          successMsg.style.display = "block";
+          setTimeout(() => { window.location.href = "login.html"; }, 2000);
+        } else {
+          errorMsg.textContent = `❌ ${result.error}`;
+          errorMsg.style.display = "block";
+          successMsg.style.display = "none";
+          submitBtn.disabled = false;
+          submitBtn.textContent = "登録する";
+        }
+      } catch (e) {
+        errorMsg.textContent = "⚠️ 登録中にエラーが発生しました。再度お試しください。";
+        errorMsg.style.display = "block";
+        submitBtn.disabled = false;
+        submitBtn.textContent = "登録する";
+      }
+    }
+
+    // ========== 初期化 ==========
+    window.addEventListener("DOMContentLoaded", () => {
+      redirectIfLoggedIn();
+    });
+  </script>
+</body>
+</html>

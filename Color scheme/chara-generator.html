@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>キャラクター構成ジェネレーター - Palette Generator Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --primary: #10b981; --shadow: 0 8px 32px rgba(31,38,135,0.15); }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html.dark body  { background: linear-gradient(160deg,#0d0d14 0%,#111118 100%); color: #e8eaf0; }
+    html.light body { background: #f0fdf4; color: #1a1a2e; }
+    html.dark  body { background: linear-gradient(180deg,#0c0c0c 0%,#151515 100%); color: #eaeaea; }
+    body { font-family: 'DM Sans', sans-serif; padding: 24px 20px 80px; min-height: 100vh; transition: background 0.3s, color 0.3s; }
+
+    .container { max-width: 1000px; margin: 0 auto; }
+
+    .page-header { margin-bottom: 32px; }
+    .page-header h1 {
+      font-family: 'Syne', sans-serif; font-size: 2.2rem;
+      background: linear-gradient(45deg, #10b981, #3b82f6);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-header p { opacity: .6; margin-top: 6px; font-size: 14px; }
+
+    /* カード */
+    .card {
+      border-radius: 20px; padding: 28px; margin-bottom: 20px;
+      box-shadow: var(--shadow); border: 1px solid; transition: box-shadow 0.3s;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    html.light body .card { background: rgba(255,255,255,0.92); border-color: rgba(0,0,0,0.07); }
+    html.dark  body .card { background: rgba(25,25,25,0.88); border-color: rgba(255,255,255,0.06); }
+    .card:hover { box-shadow: 0 16px 48px rgba(16,185,129,0.15); }
+    .card-title {
+      font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700;
+      margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ボタン */
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .btn {
+      padding: 11px 22px; border: none; border-radius: 10px;
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+    }
+    .btn:hover { transform: translateY(-2px); opacity: .9; }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-blue    { background: #3b82f6; color: #fff; }
+    .btn-orange  { background: #f59e0b; color: #fff; }
+    .btn-gray    { background: #6c757d; color: #fff; }
+    .btn-red     { background: #ef4444; color: #fff; }
+
+    /* チップ */
+    .chip-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+    .chip {
+      padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+      border: 2px solid rgba(16,185,129,0.3); background: transparent; color: inherit;
+      cursor: pointer; transition: all 0.2s; user-select: none; font-family: 'DM Sans', sans-serif;
+    }
+    .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .chip:hover:not(.active) { border-color: var(--primary); background: rgba(16,185,129,0.1); }
+
+    /* 人数選択 */
+    .count-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .count-chip {
+      padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 700;
+      border: 2px solid rgba(16,185,129,0.35); background: transparent; color: inherit;
+      cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    }
+    .count-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    /* キャラカード */
+    .chara-cards { display: flex; flex-direction: column; gap: 20px; }
+    .chara-card {
+      border: 2px solid rgba(16,185,129,0.2);
+      border-radius: 16px; padding: 20px;
+      background: rgba(16,185,129,0.04);
+      position: relative;
+    }
+    .chara-card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px;
+    }
+    .chara-card-title {
+      font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .chara-lock-btn {
+      padding: 5px 12px; border: 2px solid rgba(245,158,11,0.4);
+      border-radius: 20px; background: transparent; color: inherit;
+      font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .chara-lock-btn.locked { background: rgba(245,158,11,0.15); border-color: #f59e0b; color: #f59e0b; }
+
+    .chara-attrs {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .attr-box {
+      background: rgba(16,185,129,0.07);
+      border: 1px solid rgba(16,185,129,0.15);
+      border-radius: 10px; padding: 12px;
+    }
+    .attr-box h5 {
+      font-size: 10px; font-weight: 700; letter-spacing: .07em;
+      opacity: .5; text-transform: uppercase; margin-bottom: 5px;
+    }
+    .attr-box .attr-val { font-size: 13px; font-weight: 600; line-height: 1.4; }
+
+    /* 空状態 */
+    .empty-state {
+      text-align: center; padding: 48px 20px; opacity: .45; font-size: 15px;
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+    /* テキスト出力 */
+    .text-output {
+      background: rgba(16,185,129,0.06); border: 2px dashed rgba(16,185,129,0.2);
+      border-radius: 14px; padding: 16px; font-size: 13px; line-height: 1.8;
+      white-space: pre-wrap; min-height: 60px; max-height: 300px; overflow-y: auto;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* 履歴 */
+    .history-list { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; }
+    .history-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 14px; border-radius: 10px;
+      background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.12);
+      font-size: 13px; gap: 10px;
+    }
+    .history-item .hist-text { flex: 1; opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-item .hist-copy {
+      padding: 4px 10px; border: none; border-radius: 6px;
+      background: var(--primary); color: #fff; font-size: 12px; font-weight: 600;
+      cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif;
+      flex-shrink: 0;
+    }
+
+    /* トースト */
+    .toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.85); color: #fff; padding: 12px 24px;
+      border-radius: 50px; opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 2000;
+    }
+    .toast.show { opacity: 1; bottom: 42px; }
+
+    @media (max-width: 600px) {
+      .page-header h1 { font-size: 1.7rem; }
+      .chara-attrs { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+  <script>
+    (function(){
+      const t = localStorage.getItem("theme") ||
+        (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.className = t;
+    })();
+  </script>
+</head>
+<body>
+
+<div id="mainNav"></div>
+<div id="toast" class="toast"></div>
+
+<div class="container">
+  <div class="page-header">
+    <h1>👥 キャラクター構成ジェネレーター</h1>
+    <p>イラスト・マンガ・小説のキャラクター設定をランダム生成します</p>
+  </div>
+
+  <!-- ========== 設定 ========== -->
+  <div class="card">
+    <div class="card-title">⚙️ 生成設定</div>
+
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;">人数</div>
+    <div class="count-chips" id="countChips">
+      <button class="count-chip active" data-n="1">1人</button>
+      <button class="count-chip" data-n="2">2人</button>
+      <button class="count-chip" data-n="3">3人</button>
+      <button class="count-chip" data-n="4">4人</button>
+      <button class="count-chip" data-n="5">5人</button>
+      <button class="count-chip" data-n="random">🎲 ランダム</button>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;">生成する属性</div>
+    <div class="chip-wrap" id="attrChipWrap">
+      <button class="chip active" data-attr="role">🎭 役割</button>
+      <button class="chip active" data-attr="gender">⚧ 性別</button>
+      <button class="chip active" data-attr="age">🎂 年齢</button>
+      <button class="chip active" data-attr="personality">💬 性格</button>
+      <button class="chip active" data-attr="feature">👁️ 外見の特徴</button>
+      <button class="chip active" data-attr="hairColor">💈 髪色</button>
+      <button class="chip active" data-attr="outfit">👗 服装</button>
+      <button class="chip active" data-attr="weapon">⚔️ 武器・道具</button>
+      <button class="chip" data-attr="ability">✨ 能力・スキル</button>
+      <button class="chip" data-attr="background">📖 背景・過去</button>
+      <button class="chip" data-attr="weakness">💔 弱点</button>
+      <button class="chip" data-attr="quote">💭 口癖・セリフ</button>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="generateCharas()">🎲 キャラ構成を生成</button>
+      <button class="btn btn-blue"    onclick="regenUnlocked()">🔄 ロック外を再生成</button>
+      <button class="btn btn-gray"    onclick="copyAllText()">📋 全員コピー</button>
+    </div>
+  </div>
+
+  <!-- ========== 結果 ========== -->
+  <div class="card">
+    <div class="card-title">👥 生成結果</div>
+    <div id="charaCards">
+      <div class="empty-state">
+        <div class="icon">👥</div>
+        <div>「キャラ構成を生成」ボタンを押してください</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== テキスト出力 ========== -->
+  <div class="card">
+    <div class="card-title">📄 テキスト出力（コピー用）</div>
+    <div class="text-output" id="textOutput">ここにテキスト形式で表示されます</div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-gray" onclick="copyAllText()">📋 コピー</button>
+    </div>
+  </div>
+
+  <!-- ========== 履歴 ========== -->
+  <div class="card">
+    <div class="card-title">📝 生成履歴（直近5件）</div>
+    <div class="history-list" id="historyList">
+      <div style="opacity:.45;font-size:13px;">まだ履歴がありません</div>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="common.js"></script>
+<script>
+// ==================== データ ====================
+const CHARA_DATA = {
+  role: ['主人公','ライバル','親友・相棒','師匠・メンター','ヴィラン（敵役）','謎の人物','コメディリリーフ','サポーター','ヒール（悪役）','隠れた協力者','裏切り者','聖職者','探偵・調査者','科学者','勇者','魔王','王族','傭兵','忍者','海賊'],
+  gender: ['女性','男性','ノンバイナリー','不明・無性','性別不詳'],
+  age: ['幼児（〜6歳）','子ども（7〜12歳）','少年少女（13〜15歳）','青年（16〜20歳）','若者（20代）','大人（30〜40代）','壮年（50〜60代）','老人（70歳〜）','不老（実年齢不明）'],
+  personality: ['元気・活発','クール・冷静','天然・おっとり','ツンデレ','熱血・情熱的','知的・策士','内向的・繊細','ミステリアス','おちゃらけ・ムードメーカー','真面目・几帳面','お人好し','毒舌家','頑固者','純粋無垢','二重人格（表と裏）','悲観的・自己嫌悪','楽天家','腹黒','鈍感','過保護'],
+  feature: ['長い黒髪','ショートカット','ツインテール','ポニーテール','ドレッドヘア','三つ編み','オールバック','ウェーブがかった髪','天然パーマ','帽子をかぶっている','眼鏡','眼帯','傷跡（顔）','傷跡（体）','タトゥー','猫耳','獣耳','翼（羽）','尻尾','角（ツノ）','爪が鋭い','義手・義足','包帯'],
+  hairColor: ['黒髪','茶髪','金髪','白髪（銀髪）','赤髪','青髪','紫髪','ピンク髪','グラデーション','グレー','緑髪','ツートーン'],
+  outfit: ['学生制服','カジュアル（普段着）','フォーマルスーツ','フル鎧（プレートアーマー）','革鎧','魔法使いのローブ','和服（着物・袴）','忍者装束','スポーツウェア','メカスーツ','ボロボロの服','高貴な衣装','海賊服','聖職者の服','探偵コート','軍服','ワンピース','白衣','スーツ（サイバー）','フード付きマント'],
+  weapon: ['なし（素手）','剣（直剣）','大剣（両手剣）','刀（日本刀）','短剣（ダガー）','弓','クロスボウ','槍','薙刀','斧','鎌','盾（防御主体）','魔法杖','魔法書（グリモワール）','銃（拳銃）','ライフル','機関銃','爆発物','鞭','扇','糸・縄','楽器（武器化）','道具（非戦闘）'],
+  ability: ['剣術の達人','魔法使い（汎用）','炎魔法','水・氷魔法','雷魔法','風魔法','土魔法','光・聖魔法','闇・呪魔法','治癒魔法','幻惑魔法','予知能力','念動力（テレキネシス）','超速移動','強化身体能力','ステルス（透明化）','変身能力','動物と話せる','時間操作（限定）','召喚術','錬金術','発明・機械工学','格闘術（武道）'],
+  background: ['復讐のために戦う','失われた記憶を探す','家族を守るため','使命を果たすため旅に出た','元・敵側の組織員','孤独な流れ者','名家の落ちこぼれ','試練に挑む見習い','過去に大きな失敗を犯した','隠された出生の秘密がある','かつては英雄だった','一般人が突然巻き込まれた','遠い未来・過去から来た','別の世界からの来訪者'],
+  weakness: ['高所恐怖症','水（泳げない）','特定の魔法属性に弱い','仲間のことになると判断が鈍る','プライドが高すぎる','体力は低い','特定の食べ物が苦手','過去のトラウマ','寂しがりや','疑り深すぎて味方を信じない'],
+  quote: ['"諦めたらそこで終わりだ"','"私には関係ない…"','"面白くなってきたな"','"うるさいうるさいうるさい！"','"…（無言）"','"計算通りだ"','"なぜだ…なぜ力が足りない"','"笑えればそれでいい"','"絶対に守ってみせる"','"お前のことは嫌いではない"','"これが私の生き方だ"','"まだだ、まだ終わらせない！"'],
+};
+
+// ==================== 状態 ====================
+let charaStates = []; // { data: {}, locked: bool }
+let history = [];
+let selectedCount = 1;
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ==================== 人数チップ ====================
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('#countChips .count-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#countChips .count-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      selectedCount = chip.dataset.n;
+    });
+  });
+  document.querySelectorAll('#attrChipWrap .chip').forEach(chip => {
+    chip.addEventListener('click', () => chip.classList.toggle('active'));
+  });
+});
+
+function getCount() {
+  const v = selectedCount;
+  if (v === 'random') return Math.floor(Math.random() * 5) + 1;
+  return parseInt(v);
+}
+
+function getActiveAttrs() {
+  return [...document.querySelectorAll('#attrChipWrap .chip.active')].map(c => c.dataset.attr);
+}
+
+// ==================== キャラ生成 ====================
+function buildCharaData(attrs) {
+  const data = {};
+  attrs.forEach(attr => {
+    if (CHARA_DATA[attr]) data[attr] = pick(CHARA_DATA[attr]);
+  });
+  return data;
+}
+
+function generateCharas() {
+  const count = getCount();
+  const attrs = getActiveAttrs();
+  if (attrs.length === 0) { showToast('属性を1つ以上選んでください'); return; }
+
+  charaStates = [];
+  for (let i = 0; i < count; i++) {
+    charaStates.push({ data: buildCharaData(attrs), locked: false });
+  }
+  render();
+  saveHistory();
+  showToast(`${count}人のキャラクターを生成しました！`);
+}
+
+function regenUnlocked() {
+  if (charaStates.length === 0) { showToast('先に生成してください'); return; }
+  const attrs = getActiveAttrs();
+  charaStates.forEach((c, i) => {
+    if (!c.locked) charaStates[i].data = buildCharaData(attrs);
+  });
+  render();
+  showToast('ロック外のキャラを再生成しました');
+}
+
+// ==================== レンダリング ====================
+const ATTR_LABELS = {
+  role: '役割', gender: '性別', age: '年齢', personality: '性格',
+  feature: '外見の特徴', hairColor: '髪色', outfit: '服装', weapon: '武器・道具',
+  ability: '能力・スキル', background: '背景・過去', weakness: '弱点', quote: '口癖',
+};
+const CHARA_ICONS = ['🟦','🟥','🟨','🟩','🟪'];
+
+function render() {
+  const el = document.getElementById('charaCards');
+  if (charaStates.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">👥</div><div>「キャラ構成を生成」ボタンを押してください</div></div>';
+    return;
+  }
+
+  el.innerHTML = '<div class="chara-cards">' + charaStates.map((c, i) => `
+    <div class="chara-card" id="chara-${i}">
+      <div class="chara-card-header">
+        <div class="chara-card-title">
+          <span>${CHARA_ICONS[i % CHARA_ICONS.length]}</span>
+          キャラクター ${i + 1}
+          ${c.data.role ? `<span style="font-size:12px;opacity:.6;font-family:'DM Sans',sans-serif;font-weight:400;">（${c.data.role}）</span>` : ''}
+        </div>
+        <button class="chara-lock-btn ${c.locked ? 'locked' : ''}"
+          onclick="toggleLock(${i})">
+          ${c.locked ? '🔒 ロック中' : '🔓 ロック解除'}
+        </button>
+      </div>
+      <div class="chara-attrs">
+        ${Object.entries(c.data).map(([k, v]) => `
+          <div class="attr-box">
+            <h5>${ATTR_LABELS[k] || k}</h5>
+            <div class="attr-val">${v}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('') + '</div>';
+
+  // テキスト出力更新
+  updateTextOutput();
+}
+
+function toggleLock(i) {
+  charaStates[i].locked = !charaStates[i].locked;
+  render();
+  showToast(charaStates[i].locked ? `🔒 キャラ${i+1}をロックしました` : `🔓 ロックを解除しました`);
+}
+
+function updateTextOutput() {
+  const text = charaStates.map((c, i) => {
+    const lines = Object.entries(c.data).map(([k, v]) => `  ${ATTR_LABELS[k] || k}: ${v}`);
+    return `【キャラクター${i+1}】\n${lines.join('\n')}`;
+  }).join('\n\n');
+  document.getElementById('textOutput').textContent = text;
+}
+
+function copyAllText() {
+  const text = document.getElementById('textOutput').textContent;
+  if (!text || text === 'ここにテキスト形式で表示されます') { showToast('先に生成してください'); return; }
+  navigator.clipboard.writeText(text);
+  showToast('全員の情報をコピーしました！');
+}
+
+// ==================== 履歴 ====================
+function saveHistory() {
+  const summary = charaStates.map((c, i) => `キャラ${i+1}: ${c.data.role || '?'} / ${c.data.personality || '?'}`).join(' ｜ ');
+  history.unshift({ summary, full: document.getElementById('textOutput').textContent, time: new Date().toLocaleTimeString('ja-JP') });
+  if (history.length > 5) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  if (history.length === 0) {
+    el.innerHTML = '<div style="opacity:.45;font-size:13px;">まだ履歴がありません</div>';
+    return;
+  }
+  el.innerHTML = history.map(h => `
+    <div class="history-item">
+      <div class="hist-text">
+        <span style="opacity:.5;font-size:11px;margin-right:6px;">${h.time}</span>
+        ${h.summary}
+      </div>
+      <button class="hist-copy" onclick="navigator.clipboard.writeText(\`${h.full.replace(/`/g, "'")}\`);showToast('コピー！')">📋</button>
+    </div>
+  `).join('');
+}
+
+// ==================== トースト ====================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ==================== 初期化 ====================
+window.onload = () => {
+  const user = requireAuth();
+  if (!user) return;
+  injectCommonStyles();
+  buildNav('chara');
+};
+</script>
+</body>
+</html>
